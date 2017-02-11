@@ -1,0 +1,8 @@
+# 17-02-11 at 23:23  -  Work with sourceDate without century and/or seconds
+# 17-02-11 at 23:23  -  Work with sourceData without delimnetrs
+# 17-02-11 at 23:24  -  Make option awk date format recognized to Sat Feb 11 23:24:21 STD 2017
+# 17-02-11 at 23:24  -  Make log find from file (or all files in dir)
+# 17-02-12 at 08:45  -  Bug: when tmp file is not defined, we have not output ot stdout
+# 17-02-12 at 20:26  -  Debug awk firstline output and date field
+# 17-02-12 at 20:28  -  Save ~tmp file to homedir
+# 17-02-12 at 20:28  -  Option -e - examples

@@ -1,0 +1,431 @@
+#!/bin/bash
+# Data Spider (DASP) - perfom getting data for defined period from any data source
+# Usage description: see fx_usage()
+# Style guide: https://google.github.io/styleguide/shell.xml
+
+function fx_usage()
+{
+
+  echo "Usage: $0 [options]... [date_start] [date_end] (optional)
+  
+  Main flags:
+    -s (--sdata-path)       - path to source data directory
+    -f (--sdata-fname)      - source data filename pattern            
+    -w (--awk-date-format)  - date format, used in current source data
+    -k (--awk-date-field)   - field in source data, contains date-time, in awk terms
+    -m (--months-format)    - months format, recognized by \$(date) command
+    -M (--months-custom)    - custom months, delimeted by ',' and content 11 delimetres
+    -o (--date-offset)      - increase day +- while search files
+    -n (--newermt)          - file from which modified date taken (optional)
+    -b (--output-debug)     - debug data destination (optional)
+    -t (--tmp-file)         - use custom temp file for awk (optional)
+
+  Date flags:
+    - set in any format recognized by \$(date) command
+    
+  Example for apache logs:
+    1) alias dasp_apache_access='dasp -s ~/logs ' -f '*access*log' -o 1 -k 4 -w '[D/M/Y:h:m:s' -m '%b'
+    2) dasp_apache_access \"yesterday 14:00\" now
+    3) dasp_apache_access -n control_file
+  
+  Example for debug:
+    1) dasp 2>/dev/null | echo "$(head;tail)"   # show 5 start and 5 end results" \
+  | sed 's/^\s\s//' 1>&2
+  
+  exit 1
+}
+
+function sys_error()
+{
+  [[ $@ ]] && echo "error: $@" >&2
+  critical_error_flag="1"
+}
+
+function sys_debug()
+{
+  [[ "${DEBUG}" == 'true' ]] && echo -e "debug: $@" >&2
+}
+
+function sys_is_abort()
+{
+  [[ $critical_error_flag == '1' ]] && echo "exit" && exit 1
+}
+
+# Set default values before iterating throught options
+
+function fx_define_vars()
+{
+
+  critical_error_flag=''
+
+  TMP_FILE='.dasp~'
+
+  DEBUG='false'
+
+  DATE_START=''
+  DATE_END="now"
+  
+  DATE_OFFSET=''
+
+  SRC_DATE_FORMAT=''
+  SRC_DATE_FIELD=''
+  
+  SRC_DATA_FNAME=''
+  SRC_DATA_PATH=''
+  
+  NEWER_MT=''
+  
+  MONTHS_FORMAT=''
+  MONTHS_CUSTOM=''
+  
+}
+
+# Set main options in 2 steps
+
+function fx_set_user_options()
+{
+
+  local OPTIND \
+        flag
+
+  # Step 1: Iterate throught arguments for getting main options
+
+  while getopts "bhw:k:f:s:n:m:M:o:t:" flag
+  do
+    case "${flag}" in
+    
+      b) DEBUG='true' ;;
+      t)
+         TMP_FILE="${OPTARG}"
+         [[ -d $TMP_FILE ]] && sys_error 'Option -t - should be not path'
+         truncate --size 0 $TMP_FILE >&2 || sys_error 'Option -t - can`t create file'
+         ;;
+
+      w) SRC_DATE_FORMAT="${OPTARG}" ;;
+      k) SRC_DATE_FIELD="${OPTARG}" ;;
+      f) SRC_DATA_FNAME="${OPTARG}" ;;
+
+      s)
+         SRC_DATA_PATH=$OPTARG
+         [[ ! -d $SRC_DATA_PATH ]] && sys_error 'Option -s - path is not exists' 
+         ;;
+      
+      n)
+         NEWER_MT=$OPTARG
+         [[ ! -f $NEWER_MT ]] && sys_error 'Option -n - file not found'
+         DATE_START=`date -d @$(stat -c %Y $NEWER_MT) +%Y-%m-%dT%H:%M:%S`;;
+      
+      m)
+         MONTHS_FORMAT=$OPTARG
+         if   [[ $MONTHS_FORMAT == "%m" ]]; then MONTHS_CUSTOM="01,02,03,04,05,
+                                                                06,07,08,09,10,
+                                                                11,12";
+         elif [[ $MONTHS_FORMAT == "%b" ]]; then MONTHS_CUSTOM="Jan,Feb,Mar,Apr,
+                                                                May,Jun,Jul,Aug,
+                                                                Sep,Oct,Nov,Dec";
+         elif [[ $MONTHS_FORMAT == "%B" ]]; then MONTHS_CUSTOM="January,Febrary,
+                                                                Marth,April,May,
+                                                                June,Jule,August,
+                                                                September,October,
+                                                                November,December";
+         else sys_error 'Option -m - unrecognized months format'; fi
+         ;; 
+
+      M)
+         MONTHS_CUSTOM=$OPTARG
+         if [[ $(echo $MONTHS_CUSTOM | grep -o "," | wc -l) != 11 ]]; then
+           sys_error 'Option -M - count of custom months must be 12 over ","'
+         fi
+         ;;
+
+      o)
+         DATE_OFFSET=$OPTARG
+         [[ ! $DATE_OFFSET =~ ^[-+]?[0-9]+$ ]] && sys_error 'Option -o - isn`t digit' ;;
+
+      h) fx_usage ;;
+      ?) sys_error ;;
+
+    esac
+  done
+  
+  sys_debug "script parametrs: $*";
+
+  # Step 2: Iterate throught arguments for getting dates
+
+  shift "$((OPTIND-1))"
+
+  [[ ! -z $1 ]] && DATE_START=$1
+  [[ ! -z $2 ]] && DATE_END=$2
+
+}
+
+function fx_define_const()
+{
+  readonly TMP_FILE
+  
+  readonly DEBUG
+
+  readonly DATE_START
+  readonly DATE_END
+  
+  readonly DATE_OFFSET
+
+  readonly SRC_DATE_FORMAT
+  readonly SRC_DATE_FIELD
+  
+  readonly SRC_DATA_FNAME
+  readonly SRC_DATA_PATH
+  
+  readonly NEWER_MT
+  
+  readonly MONTHS_FORMAT
+  readonly MONTHS_CUSTOM
+}
+
+function fx_check_required_options()
+{
+  
+  # Check other required options
+
+  [[ -z $SRC_DATE_FORMAT ]] && sys_error 'Option -w is required'
+  [[ -z $SRC_DATE_FIELD ]] && sys_error 'Option -k is required'
+  [[ -z $SRC_DATA_FNAME ]] && sys_error 'Option -f is required'
+  [[ -z $SRC_DATA_PATH ]] && sys_error 'Option -s is required'
+  [[ -z $MONTHS_CUSTOM ]] && sys_error 'Option -M or -m is required'
+  
+  # Check required dates options
+
+  [[ -z $DATE_OFFSET ]] && sys_error 'Option -o is required'
+  [[ ! -z $DATE_START \
+    && ! -z $NEWER_MT ]] && sys_error 'Option -n and \$2 mutual voided'
+  [[ -z $DATE_START && -z $NEWER_MT ]] && sys_error '$1 as date_start is required'
+  [[ -z $DATE_END ]] && sys_error '$2 as date_end is required'
+
+  # Clear tmp file and check avialabilities to write
+
+  truncate --size 0 $TMP_FILE >&2 || sys_error 'Option -t - can`t create file'
+
+}
+
+function fx_check_dates_format()
+{
+
+  date -d "$DATE_START" > /dev/null 2>&1
+  [[ $(echo $?) != 0 ]] && sys_error 'Start date format is not recognized'
+    
+  date -d "$DATE_END" > /dev/null 2>&1
+  [[ $(echo $?) != 0 ]] && sys_error 'End date format is not recognized'
+
+}
+
+function fx_find_files()
+{
+
+  local find_start \
+        find_end \
+        res_find \
+        res_test \
+        err_code
+
+  # Prepare dates for find command
+  
+  find_start=`date -d "$(date -d "$DATE_START" +%F) -${DATE_OFFSET}days" +%Y-%m-%d`
+  find_end=`date -d "$(date -d "$DATE_END" +%F) +${DATE_OFFSET}days" +%Y-%m-%d`
+  
+  # Find files between two dates and sort results by modification date
+
+  res_find=`find $SRC_DATA_PATH \
+    -type f \
+    -name "$SRC_DATA_FNAME" \
+    -newermt "$find_start 00:00:00" ! -newermt "$find_end 23:59:59" \
+    -exec ls -1rt "{}" +;`
+
+  res_test=`find $SRC_DATA_PATH \
+    -type f \
+    -name "$SRC_DATA_FNAME" \
+    -newermt "$find_start 00:00:00" ! -newermt "$find_end 23:59:59" \
+    -exec cat {} \; | wc -l`
+  
+  # Save data to debug channel
+  
+  err_code="$?"
+
+  if [[ "$err_code" -ne 0 ]]; then
+    sys_error "Find command exits with code $err_code"
+  else
+    sys_debug "records in find: $res_test";
+    echo "$res_find"
+  fi
+
+}
+
+function fx_filter_data()
+{ 
+
+  local i \
+        current_file \
+        files_list \
+        awk_start \
+        awk_end \
+        func_begin \
+        func_main \
+        func_compare
+
+  # Prepare variables
+
+  func_begin="$(awk_func_begin)"
+  func_main="$(awk_func_main)"
+  func_compare="$(awk_func_compare)"
+
+  files_list="$1"
+
+  # Prepare dates for awk command 
+
+  awk_start=`date -d "$DATE_START" "+%Y%m%d%H%M%S"`
+  awk_end=`date -d "$DATE_END" "+%Y%m%d%H%M%S"`
+
+  # Iterate throught files_list 
+  
+  i=0
+
+  while IFS= read -r current_file
+  do
+  
+    sys_debug "reading ${i} ${current_file}"
+
+    awk \
+      -v DATE_START="$awk_start" \
+      -v DATE_END="$awk_end" \
+      -v DATE_FORMAT="$SRC_DATE_FORMAT" \
+      -v DATE_FIELD="$SRC_DATE_FIELD" \
+      -v MONTHS_CUSTOM="$MONTHS_CUSTOM" \
+      -F " " \
+      --source "$func_begin" \
+      --source "$func_main" \
+      --source "$func_compare" \
+    $current_file >> $TMP_FILE
+
+    let i++
+
+  done <<< "$files_list"
+
+}
+
+function awk_func_begin 
+{
+  echo '
+  BEGIN {
+
+    # Form custom months array like ....
+
+    split (MONTHS_CUSTOM, a, ",");
+    for (i=1; i<=12; i++) {
+        months[a[i]] = sprintf("%02d", i);
+        # print months["Feb"];
+    }
+    
+    # Form dateFormat in array by splitting string and reverse it 
+    #  to array like dateFmt["%Y"]=2, ["%m"]=4
+    #  in -> vdate_format; out -> dateFmt
+
+    dateStr=DATE_FORMAT;
+    split(dateStr, arr, "[^A-Za-z0-9]");
+    for (key in arr) {
+        if (arr[key] != "") {
+            dateFmt[arr[key]] = key ;
+            # print arr[key] " - " key
+        }
+    }
+
+    # Define witch format is used in month abbr
+    #   example: %b,%B or %m
+
+  }'
+}
+
+function awk_func_main
+{ 
+  echo '
+  {
+    # Working with current record - sourceDate
+    #   in -> currDate; out -> currDateStr
+
+    currDate = $DATE_FIELD; # may be "$"DATE_FIELD ?
+    # print currDate;
+
+    # Convert current date to needle format for comparing
+    split(currDate, arrC, "[^A-Za-z0-9]");      # make arr [1]="2009" [3]="May"
+    currDateStr = arrC [dateFmt["Y"]] \
+                  months[arrC [dateFmt["M"]]] \
+                  arrC [dateFmt["D"]] \
+                  arrC [dateFmt["h"]] \
+                  arrC [dateFmt["m"]] \
+                  arrC [dateFmt["s"]];
+
+  }'
+}
+
+function awk_func_compare
+{
+  echo '
+  {
+    # Main comapare operation
+    # .. compare dates as numbers like YMHhms = 20170101200005)
+    #print currDateStr " " DATE_START " " DATE_END
+    if (currDateStr >= DATE_START && currDateStr <= DATE_END){
+        # print "CD - " currDateStr "; SD - " dateStart "; ED - " dateEnd;
+        print $0;
+    }            
+  } '
+}
+
+function main()
+{
+
+  local files_list \
+        records \
+        time_0 \
+        time_1 \
+        time_2 \
+        time_3 \
+        time_res
+
+  # Define necessary options, vars and constants
+
+  time_0=$(date +%s%N | cut -b1-13)
+
+  fx_define_vars
+  fx_set_user_options "$@"
+  fx_define_const
+
+  fx_check_required_options
+  sys_is_abort
+
+  fx_check_dates_format
+  sys_is_abort
+
+  # Get list of files in dates range
+
+  time_1=$(date +%s%N | cut -b1-13)
+  files_list="$("fx_find_files")"
+  readonly files_list
+  sys_is_abort
+
+  # Filter records in files with dates range
+
+  time_2=$(date +%s%N | cut -b1-13)
+  fx_filter_data "$files_list"
+  sys_is_abort
+  time_3=$(date +%s%N | cut -b1-13)
+
+
+  # Output execute times
+
+  let time_res=$time_3-$time_2
+  sys_debug "Awk execute time: $time_res milliseconds"
+  
+  let time_res=$time_3-$time_0
+  sys_debug "Script execute time: $time_res milliseconds"
+}
+
+main "$@"
