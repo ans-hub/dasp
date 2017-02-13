@@ -58,7 +58,7 @@ function fx_define_vars()
 
   critical_error_flag=''
 
-  TMP_FILE='.dasp~'
+  TMP_FILE="$HOME/.dasp~"
 
   DEBUG='false'
 
@@ -98,7 +98,7 @@ function fx_set_user_options()
       t)
          TMP_FILE="${OPTARG}"
          [[ -d $TMP_FILE ]] && sys_error 'Option -t - should be not path'
-         truncate --size 0 $TMP_FILE >&2 || sys_error 'Option -t - can`t create file'
+         truncate --size 0 ${TMP_FILE} >&2 || sys_error 'Option -t - can`t create file'
          ;;
 
       w) SRC_DATE_FORMAT="${OPTARG}" ;;
@@ -203,8 +203,9 @@ function fx_check_required_options()
 
   # Clear tmp file and check avialabilities to write
 
-  truncate --size 0 $TMP_FILE >&2 || sys_error 'Option -t - can`t create file'
-
+  sys_debug "Use ${TMP_FILE} temp file"
+  truncate --size 0 ${TMP_FILE} >&2 || sys_error 'Option -t - can`t create file'
+  
 }
 
 function fx_check_dates_format()
@@ -259,6 +260,7 @@ function fx_find_files()
 
 }
 
+
 function fx_filter_data()
 { 
 
@@ -299,6 +301,7 @@ function fx_filter_data()
       -v DATE_FORMAT="$SRC_DATE_FORMAT" \
       -v DATE_FIELD="$SRC_DATE_FIELD" \
       -v MONTHS_CUSTOM="$MONTHS_CUSTOM" \
+      -v DEBUG="$DEBUG" \
       -F " " \
       --source "$func_begin" \
       --source "$func_main" \
@@ -315,7 +318,6 @@ function awk_func_begin
 {
   echo '
   BEGIN {
-
     # Form custom months array like ....
 
     split (MONTHS_CUSTOM, a, ",");
@@ -349,7 +351,11 @@ function awk_func_main
   {
     # Working with current record - sourceDate
     #   in -> currDate; out -> currDateStr
-
+    if (DEBUG == "true"){
+      print "debug: awk_output is " $4 > "/dev/stderr";
+      DEBUG = "false";
+    }
+    
     currDate = $DATE_FIELD; # may be "$"DATE_FIELD ?
     # print currDate;
 
@@ -392,8 +398,6 @@ function main()
 
   # Define necessary options, vars and constants
 
-  time_0=$(date +%s%N | cut -b1-13)
-
   fx_define_vars
   fx_set_user_options "$@"
   fx_define_const
@@ -406,26 +410,19 @@ function main()
 
   # Get list of files in dates range
 
-  time_1=$(date +%s%N | cut -b1-13)
   files_list="$("fx_find_files")"
   readonly files_list
   sys_is_abort
 
   # Filter records in files with dates range
 
-  time_2=$(date +%s%N | cut -b1-13)
   fx_filter_data "$files_list"
   sys_is_abort
-  time_3=$(date +%s%N | cut -b1-13)
 
+  # Show file
 
-  # Output execute times
+  #$(cat $TMP_FILE) 
 
-  let time_res=$time_3-$time_2
-  sys_debug "Awk execute time: $time_res milliseconds"
-  
-  let time_res=$time_3-$time_0
-  sys_debug "Script execute time: $time_res milliseconds"
 }
 
 main "$@"
