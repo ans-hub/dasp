@@ -6,7 +6,7 @@
 function fx_usage()
 {
 
-  echo "Usage: $0 [options]... [date_start] [date_end] (optional)
+  echo "Usage: dasp [options]... [date_start] [date_end] (optional)
   
   Main flags:
     -s (--sdata-path)       - path to source data directory
@@ -29,7 +29,8 @@ function fx_usage()
     3) dasp_apache_access -n control_file
   
   Example for debug:
-    1) dasp 2>/dev/null | echo "$(head;tail)"   # show 5 start and 5 end results" \
+    1) dasp 2>/dev/null | echo \"\$(head;tail)\"   # show 5 start and 5 end results
+    " \
   | sed 's/^\s\s//' 1>&2
   
   exit 1
@@ -275,10 +276,6 @@ function fx_filter_data()
 
   # Prepare variables
 
-  func_begin="$(awk_func_begin)"
-  func_main="$(awk_func_main)"
-  func_compare="$(awk_func_compare)"
-
   files_list="$1"
 
   # Prepare dates for awk command 
@@ -303,10 +300,7 @@ function fx_filter_data()
       -v MONTHS_CUSTOM="$MONTHS_CUSTOM" \
       -v DEBUG="$DEBUG" \
       -F " " \
-      --source "$func_begin" \
-      --source "$func_main" \
-      --source "$func_compare" \
-    $current_file >> $TMP_FILE
+      "$(awk_func)" $current_file >> $TMP_FILE
 
     let i++
 
@@ -314,7 +308,7 @@ function fx_filter_data()
 
 }
 
-function awk_func_begin 
+function awk_func
 {
   echo '
   BEGIN {
@@ -342,12 +336,7 @@ function awk_func_begin
     # Define witch format is used in month abbr
     #   example: %b,%B or %m
 
-  }'
-}
-
-function awk_func_main
-{ 
-  echo '
+  }
   {
     # Working with current record - sourceDate
     #   in -> currDate; out -> currDateStr
@@ -368,12 +357,7 @@ function awk_func_main
                   arrC [dateFmt["m"]] \
                   arrC [dateFmt["s"]];
 
-  }'
-}
-
-function awk_func_compare
-{
-  echo '
+  }
   {
     # Main comapare operation
     # .. compare dates as numbers like YMHhms = 20170101200005)
