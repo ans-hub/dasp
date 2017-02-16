@@ -1,0 +1,102 @@
+#!/bin/bash
+# 
+# LoGen scenario for DaSp LoGen - perfom generating fake logs
+# for DaSp qa testing
+#
+# Style guide: https://google.github.io/styleguide/shell.xml
+
+
+echo -e "\nGenerating fake logs for dasp testing make long time"
+echo -e "\nMkdirs for testing data"
+
+mkdir perfomance_some \
+      perfomance_once \
+      regular_date \
+      timestamp_date \
+      several_fields \
+      custom_months \
+      without_years \
+      without_century \
+      without_seconds \
+      temp_output
+
+echo -e "\nForm perfomance data - some files"
+
+./logen -o "perfomance_some/data" \
+        -d "+[%Y-%b-%d:%H:%M:%S" \
+        -s 4 \
+        -g "15,10,\040,3" \
+        -b \
+        "2016-12-29 12:34:00" "2017-01-07 11:03:00"
+
+echo -e "\nForm perfomance data - one file"
+
+./logen -d "+[%Y-%b-%d:%H:%M:%S" \
+        -s 4 \
+        -g "15,10,\040,3" \
+        -b \
+        "2016-12-29 12:34:00" "2017-01-07 11:03:00" \
+        > perfomance_once/data
+
+echo -e "\nForm data for regular dates"
+
+./logen -o "regular_date/data" \
+        -d "+%H:%M:%S at %Y-%b-%d" \
+        -s 198 \
+        -g "9,15,;,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data for timestamp dates"
+
+./logen -o "timestamp_date/data" \
+        -d "+%s" \
+        -s 198 \
+        -g "9,15,;,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data for several fields"
+
+./logen -o "several_fields/data" \
+        -d "+%H:%M:%S %Y-%b-%d" \
+        -s 198 \
+        -g "9,15,\040,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data for custom months"
+
+./logen -o "custom_months/data" \
+        -d "+%Y-únor-%d:%H:%M:%S" \
+        -s 198 \
+        -g "9,15,\040,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data without years"
+
+./logen -o "without_years/data" \
+        -d "+%b-%d:%H:%M:%S" \
+        -s 198 \
+        -g "9,15,\040,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data without century"
+
+./logen -o "without_century/data" \
+        -d "+%H:%M:%S %y-%b-%d" \
+        -s 198 \
+        -g "9,15,\040,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data without seconds"
+
+./logen -o "without_seconds/data" \
+        -d "+%H:%M %y-%b-%d" \
+        -s 198 \
+        -g "9,15,\040,2" \
+        -b \
+        "2008-02-01 13:00:00" "2008-03-05 18:12:00"

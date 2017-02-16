@@ -1,0 +1,366 @@
+#!/bin/bash
+#
+# Logs generator (LoGen) - perfom generating fake logs in format
+# like "string string date string string" and so on
+#
+# Style guide: https://google.github.io/styleguide/shell.xml
+
+
+# SYSTEM FUNCTIONS
+
+function sys_usage() {
+
+  echo "Usage: logen [options]... [date_start] [date_end]
+  
+  Main flags:
+    -s (--step-sec)         - date iteration step (in seconds)
+    -d (--date-format)      - date format in \$(date) format for output
+    -g (--garbage-fields)   - garbage fields: count, length, separator &
+                              date field position (as \"%d,%d,\%d|\%s,%d\")
+    -o (--output)           - output \"path/fname_prefix\" (optional)
+    -b (--debug)            - show debug info (optional)
+    -e (--examples)         - show usage examples
+    -h (--help)             - show this info
+  
+  Dates flags:
+    - set in any format recognized by \$(date) command
+    - date_end is optional, by default is \"now\"
+
+  Version: 0.2
+    " \
+  | sed 's/^\s\s//' 1>&2
+  
+  exit 1
+}
+
+function sys_examples() {
+
+  echo "Example:
+
+    To form logs in \"test\" dir in files starts with \"log\", preffered log
+    garbage string is \"1238 1231 [12:44:00_28-Jan-2017 3213 2142\" with step
+    eq 20 sec, for 2 days ago:
+
+    ./logen -s 20 -d \"[+%H:%M:%S_%d-%b-%Y]\" -o path/fname -g "4,0,\\040,3"
+      \"2 days ago\"
+
+    LoGen may be used in soft, that requries much text data for the qa testing,
+    and when preffered not keep logs in test dir of soft, but quickly deploy it
+    by custom developer
+
+    " \
+  | sed 's/^\s\s//' 1>&2
+
+  exit 1
+}
+
+function sys_error() {
+  [[ "$@" ]] && echo "err: $@" >&2
+  critical_error_flag="1"
+}
+
+function sys_debug() {
+  [[ "${DEBUG}" == 'true' ]] && echo -e "dbg: $@" >&2
+}
+
+function sys_is_abort() {
+  if [[ "${critical_error_flag}" == '1' ]]; then
+    echo "tip: type ./logen -h for usage"
+    echo "exit"
+    exit 1
+  fi
+}
+
+# OPTION`S AND DEFINING FUNCTION
+
+function fx_define_vars(){
+  critical_error_flag=''
+  DEBUG='false'
+  
+  DATE_START=''
+  DATE_END=''
+
+  DATE_FORMAT=''
+  DATE_STEP=0
+
+  OUTPUT_FNAME=''
+
+  GARB_FIELDS=''
+}
+
+function fx_define_const() {
+  readonly DEBUG
+  
+  readonly DATE_START
+  readonly DATE_END
+
+  readonly DATE_FORMAT
+  readonly DATE_STEP
+
+  readonly GARB_FIELDS
+}
+
+function fx_getopts() {
+
+  local OPTIND \
+        flag
+
+  # Get main options
+
+  while getopts 'bhes:d:o:g:' flag
+  do
+    case "${flag}" in
+      
+      b) DEBUG='true' ;;
+      s) DATE_STEP="${OPTARG}" ;;
+      d) DATE_FORMAT="${OPTARG}" ;;
+      
+      o)
+         OUTPUT_FNAME="${OPTARG}"
+         truncate --size 0 "${OUTPUT_FNAME}" >&2 \
+            || sys_error 'Option -o - can`t write test file'
+         ;;
+
+      g) GARB_FIELDS="${OPTARG}"
+         [[ $(grep -o "," <<< "${GARB_FIELDS}" | wc -l) != 3 ]] \
+            && sys_error 'Option -m failed'
+         ;;
+
+      h) sys_usage ;;
+      e) sys_examples ;;
+      ?) sys_error ;;
+
+    esac
+  done
+  
+  sys_debug "script parametrs: $@";
+
+  # Get dates
+
+  shift "$((OPTIND-1))"
+
+  [[ -n "$1" ]] && DATE_START="$1"
+  [[ -n "$2" ]] && DATE_END="$2"
+}
+
+function fx_check_required_options() {
+
+  [[ -z "${DATE_STEP}" ]] && sys_error 'Option -s is required'
+  [[ -n "${DATE_STEP}" && "${DATE_STEP}" -gt 86400 ]] &&
+    \ sys_error 'Option -s - day step more than seconds in day'
+  [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -d is required'
+  [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -o is required'
+  [[ -z "${GARB_FIELDS}" ]] && sys_error 'Option -g is required'
+  [[ -z "${DATE_START}" ]] && sys_error '\$1 as date_start is required'
+  [[ -z "${DATE_END}" ]] && sys_error '\$2 as date_end is required'
+
+}
+
+function fx_check_dates_format() {
+
+  date -d "${DATE_START}" > /dev/null 2>&1
+  [[ $(echo "$?") != 0 ]] && sys_error 'Start date format is not recognized'
+    
+  date -d "${DATE_END}" > /dev/null 2>&1
+  [[ $(echo "$?") != 0 ]] && sys_error 'End date format is not recognized'
+
+  date -d "now" "${DATE_FORMAT}" > /dev/null 2>&1
+  [[ $(echo "$?") != 0 ]] && sys_error 'Output date format is not recognized'
+
+
+}
+
+# MAIN-PROGRAM FUNCTIONS
+
+function fx_form_garb() {
+
+  local i \
+        garb_format \
+        side \
+        fields_count \
+        fields_length \
+        fields_separator \
+        fields_date \
+        garb_tpl
+  
+  # Split array
+
+  gf="${GARB_FIELDS}"
+  garb_format=(${GARB_FIELDS//,/ })
+  
+  # Fill fields parametr variables
+
+  fields_count="${garb_format[0]}"
+
+  if [[ "${garb_format[1]}" -eq 0 ]]; then
+    fields_length=$(((RANDOM%10)+1))
+  else
+    fields_length="${garb_format[1]}"
+  fi
+
+  fields_separator="${garb_format[2]}"
+  fields_date="${garb_format[3]}"
+  
+  # Form temp string with defined length
+  
+  garb_tpl=$(echo \
+  $(for ((i=1; i<=${fields_length}; i++))
+    do
+      printf '%s' "${RANDOM:0:1}"
+    done
+    )
+  )
+  
+  # Return string before date field
+
+  if [[ "${1}" == "left" ]]; then
+
+    for ((i=1; i<${fields_date}; i++)); do
+      printf "${i}${garb_tpl}${fields_separator}"
+    done
+  
+  # Return string after date field
+
+  else
+
+    for ((i=$(((${fields_date}+1)));i<=${fields_count};i++)); do
+      printf "${fields_separator}${i}${garb_tpl}"
+    done
+
+  fi
+
+}
+
+function fx_compare_fileoutput() {
+
+  local iter_curr \
+        iter_end \
+        loop_cnt \
+        loop_curr \
+        output_file \
+        items_total \
+        day_sec_start \
+        day_sec_offset \
+        day_sec_left
+  
+  # For debug aims
+
+  items_total=0
+
+  # Set dates in unix timestamp format for iterate
+
+  iter_curr=$(date -d "${DATE_START}" +%s)
+  iter_end=$(date -d "${DATE_END}" +%s)
+
+  # Eval first-time seconds left in first day (in seconds)
+  
+  day_sec_start=$(date -d "$(date -d "${DATE_START}" +%Y-%m-%d)" +%s)
+  day_sec_offset=$(((${iter_curr}-${day_sec_start})))
+  day_sec_left=$(((86399-${day_sec_offset})))
+
+  # Eval first-time loop count and output file
+
+  loop_cnt=$(((${day_sec_left}/${DATE_STEP})))
+  output_file=${OUTPUT_FNAME}_$(date -d "@${iter_curr}" +%Y-%m-%d)
+
+  # Iterate
+
+  loop_curr=0 
+
+  while [[ "${iter_curr}" -le "${iter_end}" ]]; do
+  
+    # Define if iter_curr is at the next day
+
+    if [[ "${loop_curr}" -gt "${loop_cnt}" ]]; then
+
+      sys_debug "Next_day start"
+      sys_debug "Added ${items_total} items to ${output_file}" 
+      
+      loop_curr=0
+      
+      # Set date to previous file
+
+      date_touch="$(date -d "@$((($iter_curr-$DATE_STEP)))" +%Y%m%d)2359"
+      touch -t "${date_touch}" ${output_file}
+
+      # Evaluate new seconds left in new day
+      
+      day_sec_start=$(date -d "$(date -d "@${iter_curr}" +%Y-%m-%d)" +%s)
+      day_sec_offset=$(((${iter_curr}-${day_sec_start})))
+      day_sec_left=$(((86399-${day_sec_offset})))
+
+      # Evaluate loop-count and file name for new day
+
+      loop_cnt=$(((${day_sec_left}/${DATE_STEP})))
+      output_file=${OUTPUT_FNAME}_$(date -d "@${iter_curr}" +%Y-%m-%d)
+
+    fi
+    
+    echo "${1}$(date -d "@${iter_curr}" "${DATE_FORMAT}")${2}" >> $output_file
+
+    ((loop_curr++))
+    ((items_total++))
+    ((iter_curr=${iter_curr}+${DATE_STEP}))
+    
+  done
+
+  date_touch="$(date -d "@$((($iter_curr-$DATE_STEP)))" +%Y%m%d)2359"
+  touch -t "${date_touch}" ${output_file}
+
+}
+ 
+function fx_compare_stdout() {
+  
+  local items_total \
+        iter_curr \
+        iter_end
+  
+  i=0
+  items_total=0
+
+  iter_curr=$(date -d "$(date -d "${DATE_START}" +%Y-%m-%d)" +%s)
+  iter_end=$(date -d "$(date -d "${DATE_END}" +%Y-%m-%d)" +%s)
+
+  while [[ "${iter_curr}" -le "${iter_end}" ]]; do
+
+    echo "${1}$(date -d "@${iter_curr}" "${DATE_FORMAT}")${2}"
+
+    ((i++))
+    ((items_total++))
+    ((iter_curr=${iter_curr}+${DATE_STEP}))
+
+    [[ "${i}" -eq 1000 ]] && sys_debug "Added ${items_total} items" && i=0  
+
+  done
+
+}
+
+function main() {
+
+  local garb_left \
+        garb_right
+
+  fx_define_vars
+  fx_getopts "$@"
+  fx_define_const
+
+  fx_check_required_options
+  sys_is_abort
+
+  fx_check_dates_format
+  sys_is_abort
+  
+  garb_left="$(fx_form_garb "left")"
+  garb_right="$(fx_form_garb "right")"
+  
+  sys_debug "Garb example: ${garb_left}&&${garb_right}"
+
+  if [[ -n "${OUTPUT_FNAME}" ]]; then
+    fx_compare_fileoutput "$garb_left" "$garb_right"
+  else
+    fx_compare_stdout "$garb_left" "$garb_right"
+  fi
+
+}
+
+main "$@"

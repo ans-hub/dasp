@@ -356,7 +356,7 @@ function awk_func {
     # Working with current record - sourceDate
     #   in -> currDate; out -> currDateStr
     if (DEBUG == "true"){
-      print "debug: awk_output is " $4 > "/dev/stderr";
+      print "debug: awk_output is " $DATE_FIELD > "/dev/stderr";
       DEBUG = "false";
     }
     

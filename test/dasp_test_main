@@ -1,0 +1,79 @@
+#!/bin/bash
+# 
+# DaSp test scenario for automated testing dasp script
+#
+# Style guide: https://google.github.io/styleguide/shell.xml
+
+
+# Testing case 1
+
+echo "Testing case 1"
+
+assume=106
+items=$(../dasp -s perfomance_some/ \
+              -f "data*" \
+              -d " " \
+              -w "[Y-M-D:h:m:s" \
+              -k 3 \
+              -m "%b" \
+              -o 1 \
+              -t temp_output/test_output \
+              "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
+
+[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+
+# Testing case 2
+
+echo "Testing case 2"
+
+assume=106
+items=$(../dasp -s perfomance_some/ \
+              -f "data*" \
+              -d " " \
+              -w "[Y-M-D:h:m:s" \
+              -k 3 \
+              -m "%b" \
+              -o 1 \
+              "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
+
+[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+
+# Testing case 3
+
+echo "Testing case 3"
+
+assume=10965
+items=$(../dasp -s regular_date/ \
+              -f "data*" \
+              -d ";" \
+              -w "h:m:s at Y-M-D" \
+              -k 2 \
+              -m "%b" \
+              -o 1 \
+              -t temp_output/test_output \
+              "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
+
+[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+
+# Testing case 4
+
+echo "Testing case 4"
+
+assume=10965
+items=$(../dasp -s regular_date/ \
+              -f "data*" \
+              -d ";" \
+              -w "h:m:s at Y-M-D" \
+              -k 2 \
+              -m "%b" \
+              -o 1 \
+              "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
+
+[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+
+# Testing case 5 & 6 - timestamp
+
+# assume=
+# ./dasp -s test/timestamp_date/ -f "data*" -o 1 -k 2 -w 'h:m:s at Y-M-D' -m '%b' -d " " "2008-02-02 11:00:01" "now"
+
+# Testing case 7 & 8

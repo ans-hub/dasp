@@ -1,0 +1,20 @@
+#!/bin/bash
+# 
+# LoGen scenario for DaSp LoGen - perfom clear test dir from fake
+# and its folders for DaSp qa testing
+#
+# Style guide: https://google.github.io/styleguide/shell.xml
+
+
+echo -e "\nRmdirs with testing data"
+
+rm -r perfomance_some \
+      perfomance_once \
+      regular_date \
+      timestamp_date \
+      several_fields \
+      custom_months \
+      without_years \
+      without_century \
+      without_seconds \
+      temp_output
