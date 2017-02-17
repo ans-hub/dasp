@@ -325,19 +325,19 @@ function awk_func {
     split (MONTHS_CUSTOM, a, ",");
     for (i=1; i<=12; i++) {
         months[a[i]] = sprintf("%02d", i);
-        # print months["Feb"];
+        # print months["únor"] > "/dev/stderr";
     }
     
     # Form dateFormat in array by splitting string and reverse it 
     #  to array like dateFmt["%Y"]=2, ["%m"]=4
     #  in -> vdate_format; out -> dateFmt
 
-    dateStr=DATE_FORMAT;
-    split(dateStr, arr, "[^A-Za-z0-9]");
+    dateStr=DATE_FORMAT; #[^\060-\071\101-\132\141-\172]
+    split(dateStr, arr, "[^\060-\071\101-\132\141-\172\200-\377]");
     for (key in arr) {
         if (arr[key] != "") {
             dateFmt[arr[key]] = key ;
-            # print arr[key] " - " key
+            #print arr[key] " - " key
         }
     }
 
@@ -357,13 +357,15 @@ function awk_func {
     # print currDate;
 
     # Convert current date to needle format for comparing
-    split(currDate, arrC, "[^A-Za-z0-9]");      # make arr [1]="2009" [3]="May"
+    split(currDate, arrC, "[^\060-\071\101-\132\141-\172\200-\377]");      # make arr [1]="2009" [3]="May"
+    
     currDateStr = arrC [dateFmt["Y"]] \
                   months[arrC [dateFmt["M"]]] \
                   arrC [dateFmt["D"]] \
                   arrC [dateFmt["h"]] \
                   arrC [dateFmt["m"]] \
                   arrC [dateFmt["s"]];
+
 
   }
   {
