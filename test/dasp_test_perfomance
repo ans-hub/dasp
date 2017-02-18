@@ -11,7 +11,7 @@ echo "Items total:"
 time ../dasp -s perfomance_some/ \
             -f "data*" \
             -d " " \
-            -w "[Y-M-D:h:m:s" \
+            -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
             -m "%b" \
             -o 1 \
@@ -24,7 +24,7 @@ echo "Items total:"
 time ../dasp -s perfomance_once/ \
             -f "data*" \
             -d " " \
-            -w "[Y-M-D:h:m:s" \
+            -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
             -m "%b" \
             -o 1 \
@@ -37,7 +37,7 @@ echo "Items total:"
 time ../dasp -s perfomance_some/ \
             -f "data*" \
             -d " " \
-            -w "[Y-M-D:h:m:s" \
+            -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
             -m "%b" \
             -o 1 \
@@ -49,7 +49,7 @@ echo "Items total:"
 time ../dasp -s perfomance_once/ \
             -f "data*" \
             -d " " \
-            -w "[Y-M-D:h:m:s" \
+            -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
             -m "%b" \
             -o 1 \

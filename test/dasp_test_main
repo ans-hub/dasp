@@ -5,6 +5,43 @@
 # Style guide: https://google.github.io/styleguide/shell.xml
 
 
+sys_message (){
+  
+  local assume \
+        items
+
+  assume="${1}"
+  items="${2}"
+  
+
+  if [[ "${assume}" == "${items}" ]]; then
+    echo "Ok..."
+  else
+    echo "Failed... Assume ${assume}, get ${items}"
+  fi
+
+}
+
+# Testing case for code editing
+
+if [[ -n "$1" ]]; then
+
+  echo "Testing case 0"
+
+  items=$(../dasp -s regular_date/ \
+              -f "data*" \
+              -d ";" \
+              -w "%H:%M:%S at %Y-%m-%d" \
+              -k 2 \
+              -m "%m" \
+              -o 1 \
+              -b \
+              -t temp_output/test_output \
+              "2008-02-02 11:00:01" "2008-02-27 14:06:11")
+  echo "${items}"
+
+fi
+
 # Testing case 1
 
 echo "Testing case 1"
@@ -13,14 +50,15 @@ assume=106
 items=$(../dasp -s perfomance_some/ \
               -f "data*" \
               -d " " \
-              -w "[Y-M-D:h:m:s" \
+              -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
               -m "%b" \
               -o 1 \
               -t temp_output/test_output \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
 
-[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+sys_message "${assume}" "${items}"
+
 
 # Testing case 2
 
@@ -30,13 +68,14 @@ assume=106
 items=$(../dasp -s perfomance_some/ \
               -f "data*" \
               -d " " \
-              -w "[Y-M-D:h:m:s" \
+              -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
               -m "%b" \
               -o 1 \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
 
-[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+sys_message "${assume}" "${items}"
+
 
 # Testing case 3
 
@@ -46,14 +85,14 @@ assume=10965
 items=$(../dasp -s regular_date/ \
               -f "data*" \
               -d ";" \
-              -w "h:m:s at Y-M-D" \
+              -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
-              -m "%b" \
+              -m "%m" \
               -o 1 \
               -t temp_output/test_output \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
 
-[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+sys_message "${assume}" "${items}"
 
 # Testing case 4
 
@@ -63,17 +102,50 @@ assume=10965
 items=$(../dasp -s regular_date/ \
               -f "data*" \
               -d ";" \
-              -w "h:m:s at Y-M-D" \
+              -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
-              -m "%b" \
+              -m "%m" \
               -o 1 \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
 
-[[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+sys_message "${assume}" "${items}"
 
-# Testing case 5 & 6 - timestamp
+# Testing case 5
+
+echo "Testing case 5"
+
+assume=56
+items=$(../dasp -s custom_months/ \
+              -f "data*" \
+              -d " " \
+              -w "%Y:%B:%d:%H:%M:%S" \
+              -k 2 \
+              -M "leden,únor,březen,duben,květen,červen,červenec,srpen,září,říjen,listopad,prosinec" \
+              -o 1 \
+              "2008-02-02 11:00:01" "2008-02-02 14:06:11" | wc -l)
+
+sys_message "${assume}" "${items}"
+
+# # Testing case 6
+
+# echo "Testing case 6"
+
+# assume=56
+# items=$(../dasp -s timestamp_date/ \
+#               -b \
+#               -f "data*" \
+#               -d ";" \
+#               -w "S" \
+#               -k 2 \
+#               -m "%b" \
+#               -o 1 \
+#               "2008-02-02 11:00:01" "2008-02-02 14:06:11")
+# echo "${items}"
+# [[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+
+# Testing case 7 & 8 - timestamp
 
 # assume=
 # ./dasp -s test/timestamp_date/ -f "data*" -o 1 -k 2 -w 'h:m:s at Y-M-D' -m '%b' -d " " "2008-02-02 11:00:01" "now"
 
-# Testing case 7 & 8
+# Testing case 9 & 10
