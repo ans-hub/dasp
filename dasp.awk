@@ -16,6 +16,9 @@
 #
 
 BEGIN {
+  
+  # Fields of date in dataSource
+  split(DATE_FIELD,arrDf,"&");
 
   # Form custom months array like ....
   split (MONTHS_CUSTOM, a, ",");
@@ -44,19 +47,21 @@ BEGIN {
   #print "ds: " DATE_START " de: " DATE_END
   split(DATE_START, arrSt, "[^\060-\071\101-\132\141-\172\200-\377]");
   split(DATE_END, arrEn, "[^\060-\071\101-\132\141-\172\200-\377]");
-
   DATE_START = arrSt [dateFmt["%Y"]] \
               arrSt [dateFmt["%m"]] \
               arrSt [dateFmt["%d"]] \
               arrSt [dateFmt["%H"]] \
               arrSt [dateFmt["%M"]] \
-              arrSt [dateFmt["%S"]];
+              arrSt [dateFmt["%S"]] \
+              arrSt [dateFmt["%s"]];
   DATE_END = arrEn [dateFmt["%Y"]] \
             arrEn [dateFmt["%m"]] \
             arrEn [dateFmt["%d"]] \
             arrEn [dateFmt["%H"]] \
             arrEn [dateFmt["%M"]] \
-            arrEn [dateFmt["%S"]];
+            arrEn [dateFmt["%S"]] \
+            arrEn [dateFmt["%s"]];
+
   
   # for (key in arrSt) {
   #   print arrSt[key] " - " key;
@@ -71,10 +76,14 @@ BEGIN {
   # Working with current record - sourceDate
   #   in -> currDate; out -> currDateStr
   if (DEBUG == "true"){
-    print "debug: awk_output is " $DATE_FIELD > "/dev/stderr";
+    print "debug: awk_output is " $DATE_FIELD FS $3> "/dev/stderr";
   }
+
+  i=0;
+    for (key in arrDf) { if (i!=0) { currDate = currDate FS $arrDf[key]; } else { currDate = $arrDf[key] } i++; }
+    
   
-  currDate = $DATE_FIELD; # may be "$"DATE_FIELD ?
+  #currDate = $DATE_FIELD; # may be "$"DATE_FIELD ?
   # print currDate;
 
   # Convert current date to needle format for comparing
@@ -85,7 +94,8 @@ BEGIN {
                 arrC [dateFmt["%d"]] \
                 arrC [dateFmt["%H"]] \
                 arrC [dateFmt["%M"]] \
-                arrC [dateFmt["%S"]];
+                arrC [dateFmt["%S"]] \
+                arrC [dateFmt["%s"]];
 }
 {
   # Main comapare operation

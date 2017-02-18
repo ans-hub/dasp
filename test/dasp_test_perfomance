@@ -8,33 +8,33 @@ echo "Perfomance testing..."
 
 echo -e "\nParam: with tmp file, from some files"
 echo "Items total:" 
-time ../dasp -s perfomance_some/ \
+time ../dasp -s mock_perfomance_some/ \
             -f "data*" \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
             -m "%b" \
             -o 1 \
-            -t temp_output/test_output \
+            -t mock_temp_output/test_output \
             "2015-01-01" "2018-12-31" \
             | wc -l
 
 echo -e "\nParam: with tmp file, from one file"
 echo "Items total:"
-time ../dasp -s perfomance_once/ \
+time ../dasp -s mock_perfomance_once/ \
             -f "data*" \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
             -m "%b" \
             -o 1 \
-            -t temp_output/test_output \
+            -t mock_temp_output/test_output \
             "2015-01-01" "2018-12-31" \
             | wc -l
 
 echo -e "\nParam: without tmp file, from some files"
 echo "Items total:"
-time ../dasp -s perfomance_some/ \
+time ../dasp -s mock_perfomance_some/ \
             -f "data*" \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
@@ -46,7 +46,7 @@ time ../dasp -s perfomance_some/ \
 
 echo -e "\nParam: without tmp file, from one file"
 echo "Items total:"
-time ../dasp -s perfomance_once/ \
+time ../dasp -s mock_perfomance_once/ \
             -f "data*" \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \

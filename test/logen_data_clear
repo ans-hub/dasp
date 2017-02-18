@@ -8,13 +8,12 @@
 
 echo -e "\nRmdirs with testing data"
 
-rm -r perfomance_some \
-      perfomance_once \
-      regular_date \
-      timestamp_date \
-      several_fields \
-      custom_months \
-      without_years \
-      without_century \
-      without_seconds \
-      temp_output
+rm -r mock_perfomance_some \
+      mock_perfomance_once \
+      mock_regular_date \
+      mock_timestamp_date \
+      mock_custom_months \
+      mock_without_years \
+      mock_without_century \
+      mock_without_seconds \
+      mock_temp_output

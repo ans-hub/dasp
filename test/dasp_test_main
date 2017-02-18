@@ -22,39 +22,19 @@ sys_message (){
 
 }
 
-# Testing case for code editing
-
-if [[ -n "$1" ]]; then
-
-  echo "Testing case 0"
-
-  items=$(../dasp -s regular_date/ \
-              -f "data*" \
-              -d ";" \
-              -w "%H:%M:%S at %Y-%m-%d" \
-              -k 2 \
-              -m "%m" \
-              -o 1 \
-              -b \
-              -t temp_output/test_output \
-              "2008-02-02 11:00:01" "2008-02-27 14:06:11")
-  echo "${items}"
-
-fi
-
 # Testing case 1
 
 echo "Testing case 1"
 
 assume=106
-items=$(../dasp -s perfomance_some/ \
+items=$(../dasp -s mock_perfomance_some/ \
               -f "data*" \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
               -m "%b" \
               -o 1 \
-              -t temp_output/test_output \
+              -t mock_temp_output/test_output \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
 
 sys_message "${assume}" "${items}"
@@ -65,7 +45,7 @@ sys_message "${assume}" "${items}"
 echo "Testing case 2"
 
 assume=106
-items=$(../dasp -s perfomance_some/ \
+items=$(../dasp -s mock_perfomance_some/ \
               -f "data*" \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
@@ -82,14 +62,14 @@ sys_message "${assume}" "${items}"
 echo "Testing case 3"
 
 assume=10965
-items=$(../dasp -s regular_date/ \
+items=$(../dasp -s mock_regular_date/ \
               -f "data*" \
               -d ";" \
               -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
               -m "%m" \
               -o 1 \
-              -t temp_output/test_output \
+              -t mock_temp_output/test_output \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
 
 sys_message "${assume}" "${items}"
@@ -99,7 +79,7 @@ sys_message "${assume}" "${items}"
 echo "Testing case 4"
 
 assume=10965
-items=$(../dasp -s regular_date/ \
+items=$(../dasp -s mock_regular_date/ \
               -f "data*" \
               -d ";" \
               -w "%H:%M:%S at %Y-%m-%d" \
@@ -115,7 +95,7 @@ sys_message "${assume}" "${items}"
 echo "Testing case 5"
 
 assume=56
-items=$(../dasp -s custom_months/ \
+items=$(../dasp -s mock_custom_months/ \
               -f "data*" \
               -d " " \
               -w "%Y:%B:%d:%H:%M:%S" \
@@ -126,26 +106,70 @@ items=$(../dasp -s custom_months/ \
 
 sys_message "${assume}" "${items}"
 
-# # Testing case 6
+# Testing case 6
 
-# echo "Testing case 6"
+echo "Testing case 6"
 
-# assume=56
-# items=$(../dasp -s timestamp_date/ \
-#               -b \
-#               -f "data*" \
-#               -d ";" \
-#               -w "S" \
-#               -k 2 \
-#               -m "%b" \
-#               -o 1 \
-#               "2008-02-02 11:00:01" "2008-02-02 14:06:11")
-# echo "${items}"
-# [[ "${assume}" == "${items}" ]] && echo "Ok..." || echo "Failed..."
+assume=20
+items=$(../dasp -s mock_without_century/ \
+            -f "data*" \
+            -d " " \
+            -w "%H:%M:%S %y-%b-%d" \
+            -k "2&3" \
+            -m "%b" \
+            -o 1 \
+            -t mock_temp_output/test_output \
+            "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
 
-# Testing case 7 & 8 - timestamp
+sys_message "${assume}" "${items}"
 
-# assume=
-# ./dasp -s test/timestamp_date/ -f "data*" -o 1 -k 2 -w 'h:m:s at Y-M-D' -m '%b' -d " " "2008-02-02 11:00:01" "now"
+# Testing case 7
 
-# Testing case 9 & 10
+echo "Testing case 7"
+
+assume=21
+items=$(../dasp -s mock_without_seconds/ \
+            -f "data*" \
+            -d " " \
+            -w "%H:%M %y-%b-%d" \
+            -k "2&3" \
+            -m "%b" \
+            -o 1 \
+            -t mock_temp_output/test_output \
+            "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
+
+sys_message "${assume}" "${items}"
+
+# Testing case 8
+
+echo "Testing case 8"
+
+assume=20
+items=$(../dasp -s mock_without_years/ \
+            -f "data*" \
+            -d " " \
+            -w "%b-%d:%H:%M:%S" \
+            -k "2" \
+            -m "%b" \
+            -o 1 \
+            -t mock_temp_output/test_output \
+            "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
+
+sys_message "${assume}" "${items}"
+
+# Testing case 9
+
+echo "Testing case 9"
+
+assume=20
+items=$(../dasp -s mock_timestamp_date/ \
+            -f "data*" \
+            -d ";" \
+            -w "%s" \
+            -k "2" \
+            -m "%b" \
+            -o 1 \
+            -t mock_temp_output/test_output \
+            "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
+
+sys_message "${assume}" "${items}"

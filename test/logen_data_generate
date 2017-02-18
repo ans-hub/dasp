@@ -9,20 +9,19 @@
 echo -e "\nGenerating fake logs for dasp testing make long time"
 echo -e "\nMkdirs for testing data"
 
-mkdir perfomance_some \
-      perfomance_once \
-      regular_date \
-      timestamp_date \
-      several_fields \
-      custom_months \
-      without_years \
-      without_century \
-      without_seconds \
-      temp_output
+mkdir mock_perfomance_some \
+      mock_perfomance_once \
+      mock_regular_date \
+      mock_timestamp_date \
+      mock_custom_months \
+      mock_without_years \
+      mock_without_century \
+      mock_without_seconds \
+      mock_temp_output
 
 echo -e "\nForm perfomance data - some files"
 
-./logen -o "perfomance_some/data" \
+./logen -o "mock_perfomance_some/data" \
         -d "+[%Y-%b-%d:%H:%M:%S" \
         -s 4 \
         -g "15,10,\040,3" \
@@ -36,11 +35,11 @@ echo -e "\nForm perfomance data - one file"
         -g "15,10,\040,3" \
         -b \
         "2016-12-29 12:34:00" "2017-01-07 11:03:00" \
-        > perfomance_once/data
+        > mock_perfomance_once/data
 
 echo -e "\nForm data for regular dates"
 
-./logen -o "regular_date/data" \
+./logen -o "mock_regular_date/data" \
         -d "+%H:%M:%S at %Y-%m-%d" \
         -s 198 \
         -g "9,15,;,2" \
@@ -49,52 +48,43 @@ echo -e "\nForm data for regular dates"
 
 echo -e "\nForm data for timestamp dates"
 
-./logen -o "timestamp_date/data" \
+./logen -o "mock_timestamp_date/data" \
         -d "+%s" \
         -s 198 \
         -g "9,15,;,2" \
         -b \
         "2008-02-01 13:00:00" "2008-03-05 18:12:00"
 
-echo -e "\nForm data for several fields"
-
-./logen -o "several_fields/data" \
-        -d "+%H:%M:%S %Y-%b-%d" \
-        -s 198 \
-        -g "9,15,\040,2" \
-        -b \
-        "2008-02-01 13:00:00" "2008-03-05 18:12:00"
-
 echo -e "\nForm data for custom months"
 
-./logen -o "custom_months/data" \
+./logen -o "mock_custom_months/data" \
         -d "+%Y-únor-%d:%H:%M:%S" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
         "2008-02-01 13:00:00" "2008-03-05 18:12:00"
 
-echo -e "\nForm data without years"
+echo -e "\nForm data without years, several fields"
 
-./logen -o "without_years/data" \
+./logen -o "mock_without_years/data" \
         -d "+%b-%d:%H:%M:%S" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
         "2008-02-01 13:00:00" "2008-03-05 18:12:00"
 
-echo -e "\nForm data without century"
+echo -e "\nForm data without century, several fields"
 
-./logen -o "without_century/data" \
+./logen -o "mock_without_century/data" \
         -d "+%H:%M:%S %y-%b-%d" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
         "2008-02-01 13:00:00" "2008-03-05 18:12:00"
 
-echo -e "\nForm data without seconds"
+echo -e "\nForm data without seconds, several fields"
 
-./logen -o "without_seconds/data" \
+./logen -o "mock_without_seconds/data" \
         -d "+%H:%M %y-%b-%d" \
         -s 198 \
         -g "9,15,\040,2" \

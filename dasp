@@ -27,6 +27,9 @@ function fx_usage() {
     1) alias dasp_apache_access='dasp -s ~/logs ' -d " " -f '*access*log' -o 1 -k 4 -w '[D/M/Y:h:m:s' -m '%b'
     2) dasp_apache_access \"yesterday 14:00\" \"now\"
     3) dasp_apache_access -n control_file
+
+  Version: 1.00
+
     " \
   | sed 's/^\s\s//' 1>&2
   
