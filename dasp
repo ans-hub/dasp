@@ -51,6 +51,10 @@ function sys_is_abort() {
   fi
 }
 
+function sys_workdir() {
+  echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+}
+
 # Set default values before iterating throught options
 
 function fx_define_vars() {
@@ -150,6 +154,7 @@ function fx_getopts() {
 }
 
 function fx_define_const() {
+
   readonly TMP_FILE
   
   readonly DEBUG
@@ -264,7 +269,7 @@ function fx_filter_data() {
   # Prepare variables
 
   files_list="$1"
-
+  
   # Prepare dates for awk command 
   # Define here is there are seconds and century and year and 
   # decide how to formt comparing dates replace
@@ -273,12 +278,10 @@ function fx_filter_data() {
   awk_end=`date -d "${DATE_END}" "+%Y%m%d%H%M%S"`
 
   # Iterate throught files_list 
-  
   i=0
 
   while IFS= read -r current_file
   do
-  
     sys_debug "reading ${i} ${current_file}"
 
     if [[ -n "${TMP_FILE}" ]]; then
@@ -290,7 +293,8 @@ function fx_filter_data() {
       -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
       -v DEBUG="${DEBUG}" \
       -F "${SRC_DATA_SEPAR}" \
-      "$(awk_func)" ${current_file} >> ${TMP_FILE}
+      -f "$(sys_workdir)/dasp.awk" \
+      ${current_file} >> ${TMP_FILE}
     
     else
     
@@ -302,7 +306,8 @@ function fx_filter_data() {
       -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
       -v DEBUG="${DEBUG}" \
       -F "${SRC_DATA_SEPAR}" \
-      "$(awk_func)" ${current_file}`
+      -f "$(sys_workdir)/dasp.awk" \
+      ${current_file}`
 
       [[ -n "${content}" ]] && echo "${content}" && content=''
 
@@ -315,73 +320,6 @@ function fx_filter_data() {
   # Show output
 
   [[ -n "${TMP_FILE}" ]] && cat "${TMP_FILE}"
-
-}
-
-function awk_func {
-
-  echo '
-  BEGIN {
-    # Form custom months array like ....
-
-    split (MONTHS_CUSTOM, a, ",");
-    for (i=1; i<=12; i++) {
-        months[a[i]] = sprintf("%02d", i);
-        # print months["únor"] > "/dev/stderr";
-    }
-    
-    # Form dateFormat in array by splitting string and reverse it 
-    #  to array like dateFmt["%Y"]=2, ["%m"]=4
-    #  in -> vdate_format; out -> dateFmt
-
-    dateStr=DATE_FORMAT;
-    # Split array with separators not ascii and not %
-    split(dateStr, arr, "[^\045\060-\071\101-\132\141-\172\200-\377]");
-    for (key in arr) {
-        if (arr[key] != "") {
-          if (arr[key] == "%Y" || arr[key] == "%y"){ arr[key] = "%Y" }
-          if (arr[key] == "%b" || arr[key] == "%B" || arr[key] == "%m") { arr[key] = "%m" }
-          dateFmt[arr[key]] = key ;
-          #print arr[key] " - " key
-        }
-    }
-
-    # Define witch format is used in month abbr
-    #   example: %b,%B or %m
-
-  }
-  {
-    # Working with current record - sourceDate
-    #   in -> currDate; out -> currDateStr
-    if (DEBUG == "true"){
-      print "debug: awk_output is " $DATE_FIELD > "/dev/stderr";
-    }
-    
-    currDate = $DATE_FIELD; # may be "$"DATE_FIELD ?
-    # print currDate;
-
-    # Convert current date to needle format for comparing
-    split(currDate, arrC, "[^\060-\071\101-\132\141-\172\200-\377]");      # make arr [1]="2009" [3]="May"
-    
-    currDateStr = arrC [dateFmt["%Y"]] \
-                  months[arrC [dateFmt["%m"]]] \
-                  arrC [dateFmt["%d"]] \
-                  arrC [dateFmt["%H"]] \
-                  arrC [dateFmt["%M"]] \
-                  arrC [dateFmt["%S"]];
-  }
-  {
-    # Main comapare operation
-    # .. compare dates as numbers like YMHhms = 20170101200005)
-    if (DEBUG == "true"){
-      print "debug: awk_compare is " currDateStr " " DATE_START " " DATE_END > "/dev/stderr";
-      DEBUG = "false";
-    }
-    if (currDateStr >= DATE_START && currDateStr <= DATE_END){
-        # print "CD - " currDateStr "; SD - " dateStart "; ED - " dateEnd;
-        print $0;
-    }            
-  } '
 
 }
 
