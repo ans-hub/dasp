@@ -1,11 +1,23 @@
 # Awk library for dasp script
-#
-# Perfom iterate data with different date formats
 
+# Perfom iterate data with different date formats
+#
+# Input command:
+
+# awk \
+#   -v DATE_START="${awk_start}" \
+#   -v DATE_END="${awk_end}" \
+#   -v DATE_FORMAT="${SRC_DATE_FORMAT}" \
+#   -v DATE_FIELD="${SRC_DATE_FIELD}" \
+#   -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
+#   -v DEBUG="${DEBUG}" \
+#   -F "${SRC_DATA_SEPAR}" \
+#   -f "$(sys_workdir)/dasp.awk"
+#
 
 BEGIN {
-  # Form custom months array like ....
 
+  # Form custom months array like ....
   split (MONTHS_CUSTOM, a, ",");
   for (i=1; i<=12; i++) {
       months[a[i]] = sprintf("%02d", i);
@@ -27,6 +39,29 @@ BEGIN {
         #print arr[key] " - " key
       }
   }
+
+  # Form start date
+  #print "ds: " DATE_START " de: " DATE_END
+  split(DATE_START, arrSt, "[^\060-\071\101-\132\141-\172\200-\377]");
+  split(DATE_END, arrEn, "[^\060-\071\101-\132\141-\172\200-\377]");
+
+  DATE_START = arrSt [dateFmt["%Y"]] \
+              arrSt [dateFmt["%m"]] \
+              arrSt [dateFmt["%d"]] \
+              arrSt [dateFmt["%H"]] \
+              arrSt [dateFmt["%M"]] \
+              arrSt [dateFmt["%S"]];
+  DATE_END = arrEn [dateFmt["%Y"]] \
+            arrEn [dateFmt["%m"]] \
+            arrEn [dateFmt["%d"]] \
+            arrEn [dateFmt["%H"]] \
+            arrEn [dateFmt["%M"]] \
+            arrEn [dateFmt["%S"]];
+  
+  # for (key in arrSt) {
+  #   print arrSt[key] " - " key;
+  # }
+  #print "output: " DATE_START " and " DATE_END; 
 
   # Define witch format is used in month abbr
   #   example: %b,%B or %m
@@ -60,7 +95,7 @@ BEGIN {
     DEBUG = "false";
   }
   if (currDateStr >= DATE_START && currDateStr <= DATE_END){
-      # print "CD - " currDateStr "; SD - " dateStart "; ED - " dateEnd;
+      #print "CD - " currDateStr "; SD - " DATE_START "; ED - " DATE_END;
       print $0;
   }            
 }

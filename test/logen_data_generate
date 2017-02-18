@@ -41,7 +41,7 @@ echo -e "\nForm perfomance data - one file"
 echo -e "\nForm data for regular dates"
 
 ./logen -o "regular_date/data" \
-        -d "+%H:%M:%S at %Y-%b-%d" \
+        -d "+%H:%M:%S at %Y-%m-%d" \
         -s 198 \
         -g "9,15,;,2" \
         -b \

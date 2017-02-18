@@ -223,22 +223,22 @@ function fx_find_files() {
 
   # Prepare dates for find command
   
-  find_start=`date -d "$(date -d "${DATE_START}" +%F) -${DATE_OFFSET}days" +%Y-%m-%d`
-  find_end=`date -d "$(date -d "${DATE_END}" +%F) +${DATE_OFFSET}days" +%Y-%m-%d`
+  find_start="$(date -d "$(date -d "${DATE_START}" +%F) -${DATE_OFFSET}days" +%Y-%m-%d)"
+  find_end="$(date -d "$(date -d "${DATE_END}" +%F) +${DATE_OFFSET}days" +%Y-%m-%d)"
   
   # Find files between two dates and sort results by modification date
 
-  res_find=`find ${SRC_DATA_PATH} \
+  res_find="$(find ${SRC_DATA_PATH} \
     -type f \
     -name "${SRC_DATA_FNAME}" \
     -newermt "${find_start} 00:00:00" ! -newermt "${find_end} 23:59:59" \
-    -exec ls -1rt "{}" +;`
+    -exec ls -1rt "{}" +;)"
 
-  res_test=`find $SRC_DATA_PATH \
+  res_test="$(find $SRC_DATA_PATH \
     -type f \
     -name "${SRC_DATA_FNAME}" \
     -newermt "${find_start} 00:00:00" ! -newermt "${find_end} 23:59:59" \
-    -exec cat {} \; | wc -l`
+    -exec cat {} \; | wc -l)"
   
   # Save data to debug channel
   
@@ -260,6 +260,7 @@ function fx_filter_data() {
         content \
         current_file \
         files_list \
+        awk_format \
         awk_start \
         awk_end \
         func_begin \
@@ -271,11 +272,10 @@ function fx_filter_data() {
   files_list="$1"
   
   # Prepare dates for awk command 
-  # Define here is there are seconds and century and year and 
-  # decide how to formt comparing dates replace
 
-  awk_start=`date -d "${DATE_START}" "+%Y%m%d%H%M%S"`
-  awk_end=`date -d "${DATE_END}" "+%Y%m%d%H%M%S"`
+  awk_format="$(echo "${SRC_DATE_FORMAT}" | sed "s/%b/%m/" | sed "s/%B/%m/")"
+  awk_start="$(date -d "${DATE_START}" "+${awk_format}")"
+  awk_end="$(date -d "${DATE_END}" "+${awk_format}")"
 
   # Iterate throught files_list 
   i=0
@@ -288,7 +288,7 @@ function fx_filter_data() {
       awk \
       -v DATE_START="${awk_start}" \
       -v DATE_END="${awk_end}" \
-      -v DATE_FORMAT="${SRC_DATE_FORMAT}" \
+      -v DATE_FORMAT="${awk_format}" \
       -v DATE_FIELD="${SRC_DATE_FIELD}" \
       -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
       -v DEBUG="${DEBUG}" \
@@ -298,16 +298,16 @@ function fx_filter_data() {
     
     else
     
-      content=`awk \
+      content="$(awk \
       -v DATE_START="${awk_start}" \
       -v DATE_END="${awk_end}" \
-      -v DATE_FORMAT="${SRC_DATE_FORMAT}" \
+      -v DATE_FORMAT="${awk_format}" \
       -v DATE_FIELD="${SRC_DATE_FIELD}" \
       -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
       -v DEBUG="${DEBUG}" \
       -F "${SRC_DATA_SEPAR}" \
       -f "$(sys_workdir)/dasp.awk" \
-      ${current_file}`
+      ${current_file})"
 
       [[ -n "${content}" ]] && echo "${content}" && content=''
 
