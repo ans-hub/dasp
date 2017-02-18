@@ -266,6 +266,8 @@ function fx_filter_data() {
   files_list="$1"
 
   # Prepare dates for awk command 
+  # Define here is there are seconds and century and year and 
+  # decide how to formt comparing dates replace
 
   awk_start=`date -d "${DATE_START}" "+%Y%m%d%H%M%S"`
   awk_end=`date -d "${DATE_END}" "+%Y%m%d%H%M%S"`
@@ -332,12 +334,15 @@ function awk_func {
     #  to array like dateFmt["%Y"]=2, ["%m"]=4
     #  in -> vdate_format; out -> dateFmt
 
-    dateStr=DATE_FORMAT; #[^\060-\071\101-\132\141-\172]
-    split(dateStr, arr, "[^\060-\071\101-\132\141-\172\200-\377]");
+    dateStr=DATE_FORMAT;
+    # Split array with separators not ascii and not %
+    split(dateStr, arr, "[^\045\060-\071\101-\132\141-\172\200-\377]");
     for (key in arr) {
         if (arr[key] != "") {
-            dateFmt[arr[key]] = key ;
-            #print arr[key] " - " key
+          if (arr[key] == "%Y" || arr[key] == "%y"){ arr[key] = "%Y" }
+          if (arr[key] == "%b" || arr[key] == "%B" || arr[key] == "%m") { arr[key] = "%m" }
+          dateFmt[arr[key]] = key ;
+          #print arr[key] " - " key
         }
     }
 
@@ -350,7 +355,6 @@ function awk_func {
     #   in -> currDate; out -> currDateStr
     if (DEBUG == "true"){
       print "debug: awk_output is " $DATE_FIELD > "/dev/stderr";
-      DEBUG = "false";
     }
     
     currDate = $DATE_FIELD; # may be "$"DATE_FIELD ?
@@ -359,19 +363,20 @@ function awk_func {
     # Convert current date to needle format for comparing
     split(currDate, arrC, "[^\060-\071\101-\132\141-\172\200-\377]");      # make arr [1]="2009" [3]="May"
     
-    currDateStr = arrC [dateFmt["Y"]] \
-                  months[arrC [dateFmt["M"]]] \
-                  arrC [dateFmt["D"]] \
-                  arrC [dateFmt["h"]] \
-                  arrC [dateFmt["m"]] \
-                  arrC [dateFmt["s"]];
-
-
+    currDateStr = arrC [dateFmt["%Y"]] \
+                  months[arrC [dateFmt["%m"]]] \
+                  arrC [dateFmt["%d"]] \
+                  arrC [dateFmt["%H"]] \
+                  arrC [dateFmt["%M"]] \
+                  arrC [dateFmt["%S"]];
   }
   {
     # Main comapare operation
     # .. compare dates as numbers like YMHhms = 20170101200005)
-    #print currDateStr " " DATE_START " " DATE_END
+    if (DEBUG == "true"){
+      print "debug: awk_compare is " currDateStr " " DATE_START " " DATE_END > "/dev/stderr";
+      DEBUG = "false";
+    }
     if (currDateStr >= DATE_START && currDateStr <= DATE_END){
         # print "CD - " currDateStr "; SD - " dateStart "; ED - " dateEnd;
         print $0;
