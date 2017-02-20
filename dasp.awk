@@ -80,7 +80,7 @@ BEGIN {
                arrSt [dateFmt["%M"]] \
                arrSt [dateFmt["%S"]] \
                arrSt [dateFmt["%s"]];
-               
+
   DATE_END =   arrEn [dateFmt["%Y"]] \
                arrEn [dateFmt["%m"]] \
                arrEn [dateFmt["%d"]] \
