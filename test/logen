@@ -4,7 +4,8 @@
 # like "string string date string string" and so on
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
-
+#
+#_______________________________________________________________
 
 # SYSTEM FUNCTIONS
 
@@ -26,7 +27,7 @@ function sys_usage() {
     - set in any format recognized by \$(date) command
     - date_end is optional, by default is \"now\"
 
-  Version: 0.2
+  Version: 0.25
     " \
   | sed 's/^\s\s//' 1>&2
   
@@ -146,8 +147,6 @@ function fx_getopts() {
 function fx_check_required_options() {
 
   [[ -z "${DATE_STEP}" ]] && sys_error 'Option -s is required'
-  [[ -n "${DATE_STEP}" && "${DATE_STEP}" -gt 86400 ]] &&
-    \ sys_error 'Option -s - day step more than seconds in day'
   [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -d is required'
   [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -o is required'
   [[ -z "${GARB_FIELDS}" ]] && sys_error 'Option -g is required'
@@ -262,6 +261,7 @@ function fx_compare_fileoutput() {
 
   loop_cnt=$(((${day_sec_left}/${DATE_STEP})))
   output_file=${OUTPUT_FNAME}_$(date -d "@${iter_curr}" +%Y-%m-%d)
+  truncate --size 0 "${output_file}"
 
   # Iterate
 
@@ -293,6 +293,7 @@ function fx_compare_fileoutput() {
 
       loop_cnt=$(((${day_sec_left}/${DATE_STEP})))
       output_file=${OUTPUT_FNAME}_$(date -d "@${iter_curr}" +%Y-%m-%d)
+      truncate --size 0 "${output_file}"
 
     fi
     
@@ -303,6 +304,8 @@ function fx_compare_fileoutput() {
     ((iter_curr=${iter_curr}+${DATE_STEP}))
     
   done
+
+  sys_debug "Total added ${items_total} items"
 
   date_touch="$(date -d "@$((($iter_curr-$DATE_STEP)))" +%Y%m%d)2359"
   touch -t "${date_touch}" ${output_file}
@@ -318,8 +321,10 @@ function fx_compare_stdout() {
   i=0
   items_total=0
 
-  iter_curr=$(date -d "$(date -d "${DATE_START}" +%Y-%m-%d)" +%s)
-  iter_end=$(date -d "$(date -d "${DATE_END}" +%Y-%m-%d)" +%s)
+  # Set dates in unix timestamp format for iterate
+
+  iter_curr=$(date -d "${DATE_START}" +%s)
+  iter_end=$(date -d "${DATE_END}" +%s)
 
   while [[ "${iter_curr}" -le "${iter_end}" ]]; do
 
