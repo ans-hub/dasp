@@ -1,20 +1,19 @@
 #!/bin/bash
 #
-# Data Spider (DASP) - perfom getting data for defined period from any data source
+# Data spider - is performing getting data for defined period from any data source
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
 function fx_usage() {
 
-  echo "Usage: dasp [options]... [date_start] [date_end]
+  echo "Usage: dasp [options]... [date_start] [date_end] (optional)
   
   Main flags:
     -s (--sdata-path)       - path to source data directory
     -f (--sdata-fname)      - source data filename pattern            
     -w (--awk-date-format)  - date format, used in current source data
     -k (--awk-date-field)   - field in source data, contains date-time, in awk terms
-    -d (--awk-field-sep)    - fields separator in source date
-    -m (--months-format)    - months format, recognized by \$(date) command
+    -d (--awk-field-sep)    - fields separator in source dated
     -M (--months-custom)    - custom months, delimeted by eleven ','
     -o (--date-offset)      - increase day +- while search files
     -b (--output-debug)     - debug data destination (optional)
@@ -79,7 +78,6 @@ function fx_define_vars() {
   SRC_DATA_PATH=''
   SRC_DATA_SEPAR=''
   
-  MONTHS_FORMAT=''
   MONTHS_CUSTOM=''
   
 }
@@ -102,7 +100,27 @@ function fx_getopts() {
          truncate --size 0 "${TMP_FILE}" >&2 || sys_error 'Option -t - can`t create file'
          ;;
 
-      w) SRC_DATE_FORMAT="${OPTARG}" ;;
+      w) 
+         SRC_DATE_FORMAT="${OPTARG}" 
+         if   [[ "${SRC_DATE_FORMAT}" =~ "%m" ]]; then MONTHS_CUSTOM="01,02,03,04,05,
+                                                                06,07,08,09,10,
+                                                                11,12";
+         elif [[ "${SRC_DATE_FORMAT}" =~ "%b" ]]; then MONTHS_CUSTOM="Jan,Feb,Mar,Apr,
+                                                                May,Jun,Jul,Aug,
+                                                                Sep,Oct,Nov,Dec";
+         elif [[ "${SRC_DATE_FORMAT}" =~ "%B" ]]; then MONTHS_CUSTOM="January,Febrary,
+                                                                Marth,April,May,
+                                                                June,Jule,August,
+                                                                September,October,
+                                                                November,December";
+         elif [[ "${SRC_DATE_FORMAT}" =~ "%s" ]]; then MONTHS_CUSTOM="01,02,03,04,05,
+                                                                06,07,08,09,10,
+                                                                11,12";
+         else
+           sys_error 'Option -w - can not recognize months format in date format';
+         fi
+         ;; 
+
       k) SRC_DATE_FIELD="${OPTARG}" ;;
       f) SRC_DATA_FNAME="${OPTARG}" ;;
       d) SRC_DATA_SEPAR="${OPTARG}" ;;
@@ -111,22 +129,6 @@ function fx_getopts() {
          SRC_DATA_PATH="${OPTARG}"
          [[ ! -d "${SRC_DATA_PATH}" ]] && sys_error 'Option -s - path is not exists' 
          ;;
-      
-      m)
-         MONTHS_FORMAT="${OPTARG}"
-         if   [[ "$MONTHS_FORMAT" == "%m" ]]; then MONTHS_CUSTOM="01,02,03,04,05,
-                                                                06,07,08,09,10,
-                                                                11,12";
-         elif [[ "$MONTHS_FORMAT" == "%b" ]]; then MONTHS_CUSTOM="Jan,Feb,Mar,Apr,
-                                                                May,Jun,Jul,Aug,
-                                                                Sep,Oct,Nov,Dec";
-         elif [[ "$MONTHS_FORMAT" == "%B" ]]; then MONTHS_CUSTOM="January,Febrary,
-                                                                Marth,April,May,
-                                                                June,Jule,August,
-                                                                September,October,
-                                                                November,December";
-         else sys_error 'Option -m - unrecognized months format'; fi
-         ;; 
 
       M)
          MONTHS_CUSTOM="${OPTARG}"
@@ -174,7 +176,6 @@ function fx_define_const() {
   readonly SRC_DATA_PATH
   readonly SRC_DATA_SEPAR
   
-  readonly MONTHS_FORMAT
   readonly MONTHS_CUSTOM
 }
 
@@ -187,7 +188,6 @@ function fx_check_required_options() {
   [[ -z "${SRC_DATA_FNAME}" ]] && sys_error 'Option -f is required'
   [[ -z "${SRC_DATA_SEPAR}" ]] && sys_error 'Option -d is required'
   [[ -z "${SRC_DATA_PATH}" ]] && sys_error 'Option -s is required'
-  [[ -z "${MONTHS_CUSTOM}" ]] && sys_error 'Option -M or -m is required'
   
   # Check required dates options
 

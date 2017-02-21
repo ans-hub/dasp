@@ -32,7 +32,6 @@ items=$(../dasp -s mock_perfomance_some/ \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
-              -m "%b" \
               -o 1 \
               -t mock_temp_output/test_output \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
@@ -50,7 +49,6 @@ items=$(../dasp -s mock_perfomance_some/ \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
-              -m "%b" \
               -o 1 \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
 
@@ -67,7 +65,6 @@ items=$(../dasp -s mock_regular_date/ \
               -d ";" \
               -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
-              -m "%m" \
               -o 1 \
               -t mock_temp_output/test_output \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
@@ -84,7 +81,6 @@ items=$(../dasp -s mock_regular_date/ \
               -d ";" \
               -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
-              -m "%m" \
               -o 1 \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
 
@@ -116,7 +112,6 @@ items=$(../dasp -s mock_without_century/ \
             -d " " \
             -w "%H:%M:%S %y-%b-%d" \
             -k "2&3" \
-            -m "%b" \
             -o 1 \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
@@ -133,7 +128,6 @@ items=$(../dasp -s mock_without_seconds/ \
             -d " " \
             -w "%H:%M %y-%b-%d" \
             -k "2&3" \
-            -m "%b" \
             -o 1 \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
@@ -150,7 +144,6 @@ items=$(../dasp -s mock_without_years/ \
             -d " " \
             -w "%b-%d:%H:%M:%S" \
             -k "2" \
-            -m "%b" \
             -o 1 \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
@@ -167,7 +160,6 @@ items=$(../dasp -s mock_timestamp_date/ \
             -d ";" \
             -w "%s" \
             -k "2" \
-            -m "%b" \
             -o 1 \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)

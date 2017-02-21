@@ -13,7 +13,6 @@ time ../dasp -s mock_perfomance_some/ \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
-            -m "%b" \
             -o 1 \
             -t mock_temp_output/test_output \
             "2015-01-01" "2018-12-31" \
@@ -26,7 +25,6 @@ time ../dasp -s mock_perfomance_once/ \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
-            -m "%b" \
             -o 1 \
             -t mock_temp_output/test_output \
             "2015-01-01" "2018-12-31" \
@@ -39,7 +37,6 @@ time ../dasp -s mock_perfomance_some/ \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
-            -m "%b" \
             -o 1 \
             "2015-01-01" "2018-12-31" \
             | wc -l
@@ -51,7 +48,6 @@ time ../dasp -s mock_perfomance_once/ \
             -d " " \
             -w "[%Y-%b-%d:%H:%M:%S" \
             -k 3 \
-            -m "%b" \
             -o 1 \
             "2015-01-01" "2018-12-31" \
             | wc -l
