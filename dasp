@@ -236,12 +236,8 @@ function fx_find_files() {
     -name "${SRC_DATA_FNAME}" \
     -newermt "${find_start} 00:00:00" ! -newermt "${find_end} 23:59:59" \
     -exec ls -1rt "{}" +;)"
-
-  res_test="$(find $SRC_DATA_PATH \
-    -type f \
-    -name "${SRC_DATA_FNAME}" \
-    -newermt "${find_start} 00:00:00" ! -newermt "${find_end} 23:59:59" \
-    -exec cat {} \; | wc -l)"
+    
+  [[ -n "${res_find}" ]] && res_test="$(cat ${res_find} | wc -l)" || res_test="0"
   
   # Save data to debug channel
   

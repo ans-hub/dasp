@@ -13,34 +13,6 @@
 #   -f "$(sys_workdir)/dasp.awk"
 #
 
-###############################################################################
-# Perfom iterate data with different date formats
-# 
-# Date comparing doing by next algorithm:
-#
-# Start_date, end_date and current_date are reduced to a common format like
-# CCYYMMDDHHMMSSs. Any of elements may be not here, from left to right, or from
-# right to left. but not from center.
-#
-# Reducing to a common format is made by following steps:
-# - splitting in array and reverse DATE_FORMAT like dateFmt["%Y"] = 2
-# - all symbols not in regex are sets as separators, and for example splitted
-#   date in format ";[%Y%m" results in array like arr[0]="", arr[1]="[",
-#   arr[2]="%Y", arr[3]="%m". When reverse it: arr["%Y"]=2, arr["%m"]=3
-# - next, change some not meaning to program formats in that program mean
-# - as is DATE_START and DATE_END is in the format like DATE_FORMAT, splitting this
-#   variables gave same values order in results array. Do the same steps, but 
-#   not reversing it. As result: dateSt[2] = 2017. So now we may get values from
-#   dateSt in this way: arrSt[dateFmt[%Y]]=2017. ans so on.
-# - now we cat build comparable format by concatenate arrays element in those order
-#   we need
-# - working with the date_current is similar, but months value is exchanged by custom
-#   months 
-#
-# Using shell command $date for comparing is very expensive
-#
-###############################################################################
-
 BEGIN {
   
   # Fields of date in dataSource
