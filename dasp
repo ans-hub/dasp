@@ -18,6 +18,7 @@ function fx_usage() {
     -o (--date-offset)      - increase day +- while search files
     -b (--output-debug)     - debug data destination (optional)
     -t (--tmp-file)         - use temp file for awk work instead of var (optional)
+    -p (--pipe-output)      - pipe output with custom commands (optional)
 
   Date flags:
     - set in any format recognized by \$(date) command
@@ -31,7 +32,7 @@ function fx_usage() {
 
     " \
   | sed 's/^\s\s//' 1>&2
-  
+
   exit 1
 
 }
@@ -53,8 +54,25 @@ function sys_is_abort() {
   fi
 }
 
+# Solution from http://stackoverflow.com/a/697552/7489927
+  
 function sys_workdir() {
-  echo "$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+  local source \
+        dir
+
+  source="${BASH_SOURCE[0]}"
+
+  while [ -h "$source" ]; do
+      dir="$( cd -P "$( dirname "$source" )" && pwd )"
+      source="$( readlink "$source" )"
+      [[ $source != /* ]] && source="$dir/$source"
+  done
+
+  dir="$( cd -P "$( dirname "$source" )" && pwd )"
+  
+  echo "$dir"
+  sys_debug "script dir: ${dir}"
 }
 
 # Set default values before iterating throught options
@@ -79,6 +97,7 @@ function fx_define_vars() {
   SRC_DATA_SEPAR=''
   
   MONTHS_CUSTOM=''
+  PIPE=''
   
 }
 
@@ -89,7 +108,7 @@ function fx_getopts() {
 
   # Get main options
 
-  while getopts 'bhw:k:f:d:s:m:M:o:t:' flag
+  while getopts 'bhw:k:f:d:s:m:M:o:t:p:' flag
   do
     case "${flag}" in
     
@@ -141,6 +160,8 @@ function fx_getopts() {
          DATE_OFFSET="${OPTARG}"
          [[ ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]] && sys_error 'Option -o - isn`t digit' ;;
 
+      p) PIPE="${OPTARG}" ;;
+
       h) fx_usage ;;
       ?) sys_error ;;
 
@@ -155,6 +176,11 @@ function fx_getopts() {
 
   [[ -n "$1" ]] && DATE_START="$1"
   [[ -n "$2" ]] && DATE_END="$2"
+
+  # Throw error if no options are passed
+
+  # sys_debug "$#"
+  # if [[ "$#" -eq 0 ]]; then fx_usage; fi
 
 }
 
@@ -177,6 +203,8 @@ function fx_define_const() {
   readonly SRC_DATA_SEPAR
   
   readonly MONTHS_CUSTOM
+  readonly PIPE
+
 }
 
 function fx_check_required_options() {
@@ -213,6 +241,8 @@ function fx_check_dates_format() {
     
   date -d "$DATE_END" > /dev/null 2>&1
   [[ $(echo "$?") != 0 ]] && sys_error 'End date format is not recognized'
+
+  # Check here pipe commands
 
 }
 
@@ -308,6 +338,8 @@ function fx_filter_data() {
       -f "$(sys_workdir)/dasp.awk" \
       ${current_file})"
 
+      # Show output if awk work without tmp file
+
       [[ -n "${content}" ]] && echo "${content}" && content=''
 
     fi
@@ -316,7 +348,7 @@ function fx_filter_data() {
 
   done <<< "${files_list}"
 
-  # Show output
+  # Show output if awk work with tmp file
 
   [[ -n "${TMP_FILE}" ]] && cat "${TMP_FILE}"
 
