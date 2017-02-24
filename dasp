@@ -296,6 +296,19 @@ function fx_filter_data() {
         func_main \
         func_compare
 
+    awk_cmd() {
+      awk \
+      -v DATE_START="${awk_start}" \
+      -v DATE_END="${awk_end}" \
+      -v DATE_FORMAT="${awk_format}" \
+      -v DATE_FIELD="${SRC_DATE_FIELD}" \
+      -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
+      -v DEBUG="${DEBUG}" \
+      -F "${SRC_DATA_SEPAR}" \
+      -f "$(sys_workdir)/dasp.awk" \
+      ${current_file} 
+    }
+
   # Prepare variables
 
   files_list="$1"
@@ -307,41 +320,20 @@ function fx_filter_data() {
   awk_end="$(date -d "${DATE_END}" "+${awk_format}")"
 
   # Iterate throught files_list 
+  
   i=0
 
   while IFS= read -r current_file
   do
     sys_debug "reading ${i} ${current_file}"
 
+    # Awk work or with tmp file, or with stdout
+    
     if [[ -n "${TMP_FILE}" ]]; then
-      awk \
-      -v DATE_START="${awk_start}" \
-      -v DATE_END="${awk_end}" \
-      -v DATE_FORMAT="${awk_format}" \
-      -v DATE_FIELD="${SRC_DATE_FIELD}" \
-      -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
-      -v DEBUG="${DEBUG}" \
-      -F "${SRC_DATA_SEPAR}" \
-      -f "$(sys_workdir)/dasp.awk" \
-      ${current_file} >> ${TMP_FILE}
-    
+      awk_cmd >> ${TMP_FILE}
     else
-    
-      content="$(awk \
-      -v DATE_START="${awk_start}" \
-      -v DATE_END="${awk_end}" \
-      -v DATE_FORMAT="${awk_format}" \
-      -v DATE_FIELD="${SRC_DATE_FIELD}" \
-      -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
-      -v DEBUG="${DEBUG}" \
-      -F "${SRC_DATA_SEPAR}" \
-      -f "$(sys_workdir)/dasp.awk" \
-      ${current_file})"
-
-      # Show output if awk work without tmp file
-
+      content="$(awk_cmd)"
       [[ -n "${content}" ]] && echo "${content}" && content=''
-
     fi
 
     let i++
@@ -349,7 +341,7 @@ function fx_filter_data() {
   done <<< "${files_list}"
 
   # Show output if awk work with tmp file
-
+  
   [[ -n "${TMP_FILE}" ]] && cat "${TMP_FILE}"
 
 }
