@@ -318,7 +318,7 @@ function fx_find_files() {
 
 }
 
-function fx_filter_data() { 
+function fx_get_data() { 
 
   local i \
         content \
@@ -366,7 +366,7 @@ function fx_filter_data() {
     
     current_type=$(file -b "${current_file}")
     if [[ ${current_type:0:4} == "gzip" ]]; then
-      show_cmd="zcat"
+      show_cmd="gunzip -c"
     else
       show_cmd="cat"
     fi
@@ -418,7 +418,7 @@ function main() {
 
   # Filter records in files with dates range
 
-  fx_filter_data "${files_list}"
+  fx_get_data "${files_list}"
 
 }
 
