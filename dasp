@@ -6,44 +6,47 @@
 
 function fx_usage() {
 
-  echo "Usage: dasp [options]... [date_start] [date_end] (optional)
+  echo "Usage: dasp [options]... [date_start] [date_end]
   
-  Main flags:
-    -s (--sdata-path)       - path to source data directory
-    -f (--sdata-fname)      - source data filename pattern            
-    -w (--awk-date-format)  - date format, used in current source data
-    -k (--awk-date-field)   - field in source data, contains date-time, in awk terms
-    -d (--awk-field-sep)    - fields separator in source dated
-    -M (--months-custom)    - custom months, delimeted by eleven ','
-    -o (--date-offset)      - increase day +- while search files
-    -b (--output-debug)     - debug data destination (optional)
-    -t (--tmp-file)         - use temp file for awk work instead of var (optional)
-    -p (--pipe-output)      - pipe output with custom commands (optional)
+  Flags:
+    ${TIP_OPTION_s}
+    ${TIP_OPTION_f}
+    ${TIP_OPTION_w}
+    ${TIP_OPTION_k}
+    ${TIP_OPTION_d}
+    ${TIP_OPTION_M}
+    ${TIP_OPTION_o}
+    ${TIP_OPTION_b}
+    ${TIP_OPTION_t}
 
-  Date flags:
-    - set in any format recognized by \$(date) command
-    
-  Example for apache logs:
-    1) alias dasp_apache_access='dasp -s ~/logs ' -d " " -f '*access*log' -o 1 -k 4 -w '[D/M/Y:h:m:s' -m '%b'
-    2) dasp_apache_access \"yesterday 14:00\" \"now\"
-    3) dasp_apache_access -n control_file
+  Arguments:
+    ${TIP_OPTION_date}
 
-  Version: 1.00
-
-    " \
+  Version: 1.00" \
   | sed 's/^\s\s//' 1>&2
 
   exit 1
+}
 
+function fx_description() {
+  echo "Description: dasp provides get data for date range from text sources
+  Usage: dasp -h" \
+  | sed 's/^\s\s//' 1>&2
+
+  exit 1
 }
 
 function sys_error() {
-  [[ "$@" ]] && echo "error: $@" >&2
+  [[ "$@" ]] && echo "err: $@" >&2
   critical_error_flag="1"
 }
 
+function sys_tip() {
+  [[ "$@" ]] && echo "tip: $@" >&2
+}
+
 function sys_debug() {
-  [[ "${DEBUG}" == 'true' ]] && echo -e "debug: $@" >&2
+  [[ "${DEBUG}" == 'true' ]] && echo -e "dbg: $@" >&2
 }
 
 function sys_is_abort() {
@@ -53,10 +56,10 @@ function sys_is_abort() {
     exit 1
   fi
 }
-
-# Solution from http://stackoverflow.com/a/697552/7489927
   
 function sys_workdir() {
+  
+  # Solution from http://stackoverflow.com/a/697552/7489927
 
   local source \
         dir
@@ -75,17 +78,26 @@ function sys_workdir() {
   sys_debug "script dir: ${dir}"
 }
 
-# Set default values before iterating throught options
-
 function fx_define_vars() {
 
+  TIP_OPTION_s="-s (--sdata-path)       - path to source data directory"
+  TIP_OPTION_f="-f (--sdata-fname)      - source data filename pattern"
+  TIP_OPTION_w="-w (--awk-date-format)  - date format, used in current source data"
+  TIP_OPTION_k="-k (--awk-date-field)   - field in source data, contains date-time, in awk terms"
+  TIP_OPTION_d="-d (--awk-field-sep)    - fields separator in source dated"
+  TIP_OPTION_M="-M (--months-custom)    - custom months, delimeted by eleven ','"
+  TIP_OPTION_o="-o (--date-offset)      - increase day +- while search files"
+  TIP_OPTION_b="-b (--output-debug)     - debug data destination (optional)"
+  TIP_OPTION_t="-t (--tmp-file)         - use temp file for awk work instead of var (optional)"
+  TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
+                
   critical_error_flag=''
   DEBUG='false'
 
   TMP_FILE=''
 
   DATE_START=''
-  DATE_END='now'
+  DATE_END=''
   
   DATE_OFFSET=''
 
@@ -106,6 +118,12 @@ function fx_getopts() {
   local OPTIND \
         flag
 
+  # Throw error if no options are passed
+
+  if [[ -z "$@" ]]; then
+    fx_description
+  fi
+
   # Get main options
 
   while getopts 'bhw:k:f:d:s:m:M:o:t:p:' flag
@@ -113,54 +131,15 @@ function fx_getopts() {
     case "${flag}" in
     
       b) DEBUG='true' ;;
-      t)
-         TMP_FILE="${OPTARG}"
-         [[ -d "${TMP_FILE}" ]] && sys_error 'Option -t - should be not path'
-         truncate --size 0 "${TMP_FILE}" >&2 || sys_error 'Option -t - can`t create file'
-         ;;
-
-      w) 
-         SRC_DATE_FORMAT="${OPTARG}" 
-         if   [[ "${SRC_DATE_FORMAT}" =~ "%m" ]]; then MONTHS_CUSTOM="01,02,03,04,05,
-                                                                06,07,08,09,10,
-                                                                11,12";
-         elif [[ "${SRC_DATE_FORMAT}" =~ "%b" ]]; then MONTHS_CUSTOM="Jan,Feb,Mar,Apr,
-                                                                May,Jun,Jul,Aug,
-                                                                Sep,Oct,Nov,Dec";
-         elif [[ "${SRC_DATE_FORMAT}" =~ "%B" ]]; then MONTHS_CUSTOM="January,Febrary,
-                                                                Marth,April,May,
-                                                                June,Jule,August,
-                                                                September,October,
-                                                                November,December";
-         elif [[ "${SRC_DATE_FORMAT}" =~ "%s" ]]; then MONTHS_CUSTOM="01,02,03,04,05,
-                                                                06,07,08,09,10,
-                                                                11,12";
-         else
-           sys_error 'Option -w - can not recognize months format in date format';
-         fi
-         ;; 
-
+      t) TMP_FILE="${OPTARG}" ;;
+      
       k) SRC_DATE_FIELD="${OPTARG}" ;;
       f) SRC_DATA_FNAME="${OPTARG}" ;;
       d) SRC_DATA_SEPAR="${OPTARG}" ;;
-
-      s)
-         SRC_DATA_PATH="${OPTARG}"
-         [[ ! -d "${SRC_DATA_PATH}" ]] && sys_error 'Option -s - path is not exists' 
-         ;;
-
-      M)
-         MONTHS_CUSTOM="${OPTARG}"
-         if [[ $(echo "${MONTHS_CUSTOM}" | grep -o "," | wc -l) != 11 ]]; then
-           sys_error 'Option -M - count of custom months must be 12 over ","'
-         fi
-         ;;
-
-      o)
-         DATE_OFFSET="${OPTARG}"
-         [[ ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]] && sys_error 'Option -o - isn`t digit' ;;
-
-      p) PIPE="${OPTARG}" ;;
+      w) SRC_DATE_FORMAT="${OPTARG}" ;;
+      s) SRC_DATA_PATH="${OPTARG}" ;;
+      M) MONTHS_CUSTOM="${OPTARG}" ;;
+      o) DATE_OFFSET="${OPTARG}" ;;
 
       h) fx_usage ;;
       ?) sys_error ;;
@@ -176,11 +155,6 @@ function fx_getopts() {
 
   [[ -n "$1" ]] && DATE_START="$1"
   [[ -n "$2" ]] && DATE_END="$2"
-
-  # Throw error if no options are passed
-
-  # sys_debug "$#"
-  # if [[ "$#" -eq 0 ]]; then fx_usage; fi
 
 }
 
@@ -211,25 +185,86 @@ function fx_check_required_options() {
   
   # Check other required options
 
-  [[ -z "${SRC_DATE_FORMAT}" ]] && sys_error 'Option -w is required'
-  [[ -z "${SRC_DATE_FIELD}" ]] && sys_error 'Option -k is required'
-  [[ -z "${SRC_DATA_FNAME}" ]] && sys_error 'Option -f is required'
-  [[ -z "${SRC_DATA_SEPAR}" ]] && sys_error 'Option -d is required'
-  [[ -z "${SRC_DATA_PATH}" ]] && sys_error 'Option -s is required'
+  [[ -z "${SRC_DATE_FORMAT}" ]] && sys_error 'option -w is required' \
+                                && sys_tip "${TIP_OPTION_w}"
+  [[ -z "${SRC_DATE_FIELD}" ]]  && sys_error 'option -k is required' \
+                                && sys_tip "${TIP_OPTION_k}"
+  [[ -z "${SRC_DATA_FNAME}" ]]  && sys_error 'option -f is required' \
+                                && sys_tip "${TIP_OPTION_f}"
+  [[ -z "${SRC_DATA_SEPAR}" ]]  && sys_error 'option -d is required' \
+                                && sys_tip "${TIP_OPTION_d}"
+  [[ -z "${SRC_DATA_PATH}" ]]   && sys_error 'option -s is required' \
+                                && sys_tip "${TIP_OPTION_s}"
   
   # Check required dates options
 
-  [[ -z "${DATE_OFFSET}" ]] && sys_error 'Option -o is required'
-  [[ -z "${DATE_START}" ]] && sys_error '\$1 as date_start is required'
-  [[ -z "${DATE_END}" ]] && sys_error '\$2 as date_end is required'
+  [[ -z "${DATE_OFFSET}" ]] && sys_error 'Option -o is required' \
+                            && sys_tip "${TIP_OPTION_o}"
+  [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
+                            && sys_tip "${TIP_OPTION_date}"
+  [[ -z "${DATE_END}" ]]    && sys_error '$2 as date_end is required' \
+                            && sys_tip "${TIP_OPTION_date}"
 
   # Clear tmp file and check avialabilities to write
 
   if [[ ! -z "${TMP_FILE}" ]]; then
+
+    if [[ -d "${TMP_FILE}" ]]; then
+      sys_error 'Option -t - should be not path'
+      sys_tip "${TIP_OPTION_t}"
+    fi
+    
+    truncate --size 0 "${TMP_FILE}" 2>/dev/null
+    if [[ "$?" != 0 ]]; then
+      sys_error 'Option -t - can`t create file'
+      sys_tip "${TIP_OPTION_t}"
+    fi
+
     sys_debug "Use ${TMP_FILE} temp file"
-    truncate --size 0 "${TMP_FILE}" >&2 || sys_error 'Option -t - can`t create file'
   else
     sys_debug "Work without temp file"
+  fi
+
+  # Abort if critical errors are here, before next step
+
+  sys_is_abort
+
+  # Check other options for valid data
+
+  if [[ ! -d "${SRC_DATA_PATH}" ]]; then
+    sys_error 'Option -s - path is not exists'
+    sys_tip "${TIP_OPTION_s}"
+  fi
+  if [[ ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
+    sys_error 'Option -o - isn`t digit'
+    sys_tip "${TIP_OPTION_o}"
+  fi
+
+  # Check and form custom months from date format
+
+  if [[ -n ${MONTHS_CUSTOM} ]]; then
+
+    if [[ $(echo "${MONTHS_CUSTOM}" | grep -o "," | wc -l) != 11 ]]; then
+      sys_error 'Option -M - count of custom months must be 12 over ","'
+      sys_tip "${TIP_OPTION_M}"
+    fi
+
+  else
+
+    if   [[ "${SRC_DATE_FORMAT}" =~ "%m" ]]; then
+      MONTHS_CUSTOM="01,02,03,04,05,06,07,08,09,10,11,12"
+    elif [[ "${SRC_DATE_FORMAT}" =~ "%b" ]]; then
+      MONTHS_CUSTOM="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec"
+    elif [[ "${SRC_DATE_FORMAT}" =~ "%s" ]]; then
+      MONTHS_CUSTOM="01,02,03,04,05,06,07,08,09,10,11,12"
+    elif [[ "${SRC_DATE_FORMAT}" =~ "%B" ]]; then
+      MONTHS_CUSTOM="January,Febrary,Marth,April,May,June,Jule,August,September,October,
+                                                                      November,December"
+    else
+      sys_error 'Option -w - can not recognize months format in date format'
+      sys_tip "${TIP_OPTION_w}"
+    fi
+  
   fi
   
 }
@@ -237,10 +272,12 @@ function fx_check_required_options() {
 function fx_check_dates_format() {
 
   date -d "$DATE_START" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'Start date format is not recognized'
+  [[ $(echo "$?") != 0 ]] && sys_error 'Start date format is not recognized' \
+                          && sys_tip "${TIP_OPTION_date}"
     
   date -d "$DATE_END" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'End date format is not recognized'
+  [[ $(echo "$?") != 0 ]] && sys_error 'End date format is not recognized' \
+                          && sys_tip "${TIP_OPTION_date}"
 
   # Check here pipe commands
 
@@ -280,7 +317,6 @@ function fx_find_files() {
   fi
 
 }
-
 
 function fx_filter_data() { 
 
@@ -366,9 +402,9 @@ function main() {
 
   fx_define_vars
   fx_getopts "$@"
-  fx_define_const
 
   fx_check_required_options
+  fx_define_const
   sys_is_abort
 
   fx_check_dates_format
