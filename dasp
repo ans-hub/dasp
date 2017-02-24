@@ -272,7 +272,6 @@ function fx_find_files() {
   # Save data to debug channel
   
   err_code="$?"
-
   if [[ "${err_code}" -ne 0 ]]; then
     sys_error "Find command exits with code ${err_code}"
   else
@@ -288,6 +287,7 @@ function fx_filter_data() {
   local i \
         content \
         current_file \
+        current_type \
         files_list \
         awk_format \
         awk_start \
@@ -305,43 +305,49 @@ function fx_filter_data() {
       -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
       -v DEBUG="${DEBUG}" \
       -F "${SRC_DATA_SEPAR}" \
-      -f "$(sys_workdir)/dasp.awk" \
-      ${current_file} 
+      -f "$(sys_workdir)/dasp.awk"
     }
 
-  # Prepare variables
-
-  files_list="$1"
-  
   # Prepare dates for awk command 
 
+  files_list="$1"
   awk_format="$(echo "${SRC_DATE_FORMAT}" | sed "s/%b/%m/" | sed "s/%B/%m/")"
   awk_start="$(date -d "${DATE_START}" "+${awk_format}")"
   awk_end="$(date -d "${DATE_END}" "+${awk_format}")"
 
   # Iterate throught files_list 
-  
+
   i=0
 
   while IFS= read -r current_file
   do
-    sys_debug "reading ${i} ${current_file}"
-
-    # Awk work or with tmp file, or with stdout
-    
-    if [[ -n "${TMP_FILE}" ]]; then
-      awk_cmd >> ${TMP_FILE}
-    else
-      content="$(awk_cmd)"
-      [[ -n "${content}" ]] && echo "${content}" && content=''
-    fi
+    # Sys counter and message
 
     let i++
+    sys_debug "reading ${i} ${current_file}"
+
+    # Determine file type and cat type
+    
+    current_type=$(file -b "${current_file}")
+    if [[ ${current_type:0:4} == "gzip" ]]; then
+      show_cmd="zcat"
+    else
+      show_cmd="cat"
+    fi
+
+    # Cat file and pipe to awk command
+
+    if [[ -n "${TMP_FILE}" ]]; then                       # tmp file
+      $show_cmd ${current_file} | awk_cmd >> ${TMP_FILE}
+    else                                                  # std out
+      content="$(cat ${current_file} | awk_cmd )"
+      [[ -n "${content}" ]] && echo "${content}" && content=''
+    fi
 
   done <<< "${files_list}"
 
   # Show output if awk work with tmp file
-  
+
   [[ -n "${TMP_FILE}" ]] && cat "${TMP_FILE}"
 
 }
