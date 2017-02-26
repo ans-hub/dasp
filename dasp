@@ -11,32 +11,39 @@
 
 function sys_usage() {
 
-  echo "Usage: dasp [options]... [date_start] [date_end]
-  
-  Flags:
+  echo "Usage: dasp [-options]... [date_start] [date_end]
+
+  Options:
     ${TIP_OPTION_s}
     ${TIP_OPTION_f}
-    ${TIP_OPTION_w}
-    ${TIP_OPTION_k}
     ${TIP_OPTION_d}
-    ${TIP_OPTION_M}
+    ${TIP_OPTION_k}
+    ${TIP_OPTION_w}
     ${TIP_OPTION_o}
-    ${TIP_OPTION_b}
+    ${TIP_OPTION_M}
+    ${TIP_OPTION_r}
     ${TIP_OPTION_t}
-    ${TIP_OPTION_h}
-
-  Arguments:
+    ${TIP_OPTION_b}
+    
+  Positional parametrs:
     ${TIP_OPTION_date}
 
-  Version: ${TIP_OPTION_ver}" \
+  Version:   ${TIP_ver}
+  Contact:   ${TIP_contact}"\
   | sed 's/^\s\s//' 1>&2
 
   exit 1
 }
 
 function sys_description() {
-  echo "Description: dasp provides get data for date range from text sources
-  For usage call: dasp -h" \
+  echo "Dasp (Data spider) - bash script, provides get data for date range from
+  text sources, which are a fields, separated by some ASCII chars. One or
+  more of the fields must contains date/time in any format.
+
+  For usage call: dasp -h
+
+  Version:   ${TIP_ver}
+  Contact:   ${TIP_contact}"\
   | sed 's/^\s\s//' 1>&2
 
   exit 1
@@ -88,19 +95,22 @@ function sys_workdir() {
 
 function fx_define_vars() {
 
-  TIP_OPTION_s="-s (--sdata-path)       - path to source data directory"
-  TIP_OPTION_f="-f (--sdata-fname)      - source data filename pattern"
-  TIP_OPTION_w="-w (--awk-date-format)  - date format, used in current source data"
-  TIP_OPTION_k="-k (--awk-date-field)   - field in source data, contains date-time, in awk terms"
-  TIP_OPTION_d="-d (--awk-field-sep)    - fields separator in source dated"
-  TIP_OPTION_M="-M (--months-custom)    - custom months, delimeted by eleven ','"
-  TIP_OPTION_o="-o (--date-offset)      - increase day +- while search files"
-  TIP_OPTION_b="-b (--output-debug)     - debug data destination (optional)"
-  TIP_OPTIOM_h="-h (--help)             - show this info"
-  TIP_OPTION_t="-t (--tmp-file)         - use temp file for awk work instead of var (optional)"
+  TIP_OPTION_s="-s | data source: directory contains data source"
+  TIP_OPTION_f="-f | data source: filenames pattern"
+  TIP_OPTION_d="-d | data source: fields separators"
+  TIP_OPTION_k="-k | data source: field(s), contains date/time"
+  TIP_OPTION_w="-w | data source: date format, recognized by \$date (without first +)"
+  TIP_OPTION_o="-o | data source: days offset (+/-) range while search files (optional)"
+  TIP_OPTION_M="-M | data source: user defined 12 months, separated by commas (optional)"
+  TIP_OPTION_r="-r | data source: only in date range by mtime (optional)"
+  TIP_OPTION_t="-t | other: use temp file for awk instead of memory (optional)"
+  TIP_OPTION_b="-b | other: show debug info (optional)"
+  TIP_OPTION_h="-h | other: show help info (optional)"
+  TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
   
-  TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
-  TIP_OPTION_ver="1.00"
+  TIP_ver="1.02"
+  TIP_copyright="Ans Novoselov @ 2017"
+  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
 
   critical_error_flag=''
   DEBUG='false'
@@ -110,7 +120,7 @@ function fx_define_vars() {
   DATE_START=''
   DATE_END=''
   
-  DATE_OFFSET=''
+  DATE_OFFSET=0
 
   SRC_DATE_FORMAT=''
   SRC_DATE_FIELD=''
@@ -118,9 +128,9 @@ function fx_define_vars() {
   SRC_DATA_FNAME=''
   SRC_DATA_PATH=''
   SRC_DATA_SEPAR=''
+  SRC_BY_MTIME='false'
   
   MONTHS_CUSTOM=''
-  PIPE=''
   
 }
 
@@ -137,7 +147,7 @@ function fx_getopts() {
 
   # Get main options
 
-  while getopts 'bhw:k:f:d:s:m:M:o:t:p:' flag
+  while getopts 'bhw:k:f:d:s:m:M:o:rt:p:' flag
   do
     case "${flag}" in
     
@@ -151,6 +161,7 @@ function fx_getopts() {
       s) SRC_DATA_PATH="${OPTARG}" ;;
       M) MONTHS_CUSTOM="${OPTARG}" ;;
       o) DATE_OFFSET="${OPTARG}" ;;
+      r) SRC_BY_MTIME='true' ;;
 
       h) sys_usage ;;
       ?) sys_error ;;
@@ -209,8 +220,6 @@ function fx_check_required_options() {
   
   # Check required dates options
 
-  [[ -z "${DATE_OFFSET}" ]] && sys_error 'Option -o is required' \
-                            && sys_tip "${TIP_OPTION_o}"
   [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
                             && sys_tip "${TIP_OPTION_date}"
   [[ -z "${DATE_END}" ]]    && sys_error '$2 as date_end is required' \
@@ -247,7 +256,7 @@ function fx_check_required_options() {
     sys_tip "${TIP_OPTION_s}"
   fi
 
-  if [[ ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
+  if [[ "${DATE_OFFSET}" != 0 && ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
     sys_error 'Option -o - isn`t digit'
     sys_tip "${TIP_OPTION_o}"
   fi
@@ -313,22 +322,39 @@ function fx_find_files() {
         res_test \
         err_code
 
+
   # Prepare dates for find command
   
   find_start="$(date -d "$(date -d "${DATE_START}" +%F) -${DATE_OFFSET}days" +%Y-%m-%d)"
   find_end="$(date -d "$(date -d "${DATE_END}" +%F) +${DATE_OFFSET}days" +%Y-%m-%d)"
-  
-  # Find files between two dates and sort results by modification date
 
-  res_find="$(find ${SRC_DATA_PATH} \
-    -type f \
-    -name "${SRC_DATA_FNAME}" \
-    -newermt "${find_start} 00:00:00" ! -newermt "${find_end} 23:59:59" \
-    -exec ls -1rt "{}" +;)"
-    
-  [[ -n "${res_find}" ]] && res_test="$(cat ${res_find} | wc -l)" || res_test="0"
+  # Find files between two dates or all in dir, and sort results by mtime
+
+  if [[ "${SRC_BY_MTIME}" == 'true' ]]; then
+
+    res_find="$(find ${SRC_DATA_PATH} \
+      -type f \
+      -name "${SRC_DATA_FNAME}" \
+      -newermt "${find_start} 00:00:00" ! -newermt "${find_end} 23:59:59" \
+      -exec ls -1rt "{}" +;)"
   
-  # Save data to debug channel
+  else
+    
+    res_find="$(find ${SRC_DATA_PATH} \
+      -type f \
+      -name "${SRC_DATA_FNAME}" \
+      -exec ls -1rt "{}" +;)"
+  fi
+
+  # Save result files count
+  
+  if [[ -n "${res_find}" ]]; then
+    res_test="$(cat ${res_find} | wc -l)"
+  else
+    res_test="0"
+  fi
+  
+  # Send data to debug channel
   
   err_code="$?"
   if [[ "${err_code}" -ne 0 ]]; then
