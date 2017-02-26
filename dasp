@@ -1,10 +1,15 @@
 #!/bin/bash
 #
-# Data spider - is performing getting data for defined period from any data source
+# Data spider - is performing getting data for defined period
+# from any data source
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
+#
+#_______________________________________________________________
 
-function fx_usage() {
+# SYSTEM FUNCTIONS
+
+function sys_usage() {
 
   echo "Usage: dasp [options]... [date_start] [date_end]
   
@@ -18,19 +23,20 @@ function fx_usage() {
     ${TIP_OPTION_o}
     ${TIP_OPTION_b}
     ${TIP_OPTION_t}
+    ${TIP_OPTION_h}
 
   Arguments:
     ${TIP_OPTION_date}
 
-  Version: 1.00" \
+  Version: ${TIP_OPTION_ver}" \
   | sed 's/^\s\s//' 1>&2
 
   exit 1
 }
 
-function fx_description() {
+function sys_description() {
   echo "Description: dasp provides get data for date range from text sources
-  Usage: dasp -h" \
+  For usage call: dasp -h" \
   | sed 's/^\s\s//' 1>&2
 
   exit 1
@@ -56,7 +62,9 @@ function sys_is_abort() {
     exit 1
   fi
 }
-  
+
+# OPTIONS AND DEFINING FUNCTIONS
+
 function sys_workdir() {
   
   # Solution from http://stackoverflow.com/a/697552/7489927
@@ -88,9 +96,12 @@ function fx_define_vars() {
   TIP_OPTION_M="-M (--months-custom)    - custom months, delimeted by eleven ','"
   TIP_OPTION_o="-o (--date-offset)      - increase day +- while search files"
   TIP_OPTION_b="-b (--output-debug)     - debug data destination (optional)"
+  TIP_OPTIOM_h="-h (--help)             - show this info"
   TIP_OPTION_t="-t (--tmp-file)         - use temp file for awk work instead of var (optional)"
+  
   TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
-                
+  TIP_OPTION_ver="1.00"
+
   critical_error_flag=''
   DEBUG='false'
 
@@ -118,10 +129,10 @@ function fx_getopts() {
   local OPTIND \
         flag
 
-  # Throw error if no options are passed
+  # Throw to description if no options are passed
 
   if [[ -z "$@" ]]; then
-    fx_description
+    sys_description
   fi
 
   # Get main options
@@ -141,7 +152,7 @@ function fx_getopts() {
       M) MONTHS_CUSTOM="${OPTARG}" ;;
       o) DATE_OFFSET="${OPTARG}" ;;
 
-      h) fx_usage ;;
+      h) sys_usage ;;
       ?) sys_error ;;
 
     esac
@@ -235,6 +246,7 @@ function fx_check_required_options() {
     sys_error 'Option -s - path is not exists'
     sys_tip "${TIP_OPTION_s}"
   fi
+
   if [[ ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
     sys_error 'Option -o - isn`t digit'
     sys_tip "${TIP_OPTION_o}"
@@ -272,16 +284,26 @@ function fx_check_required_options() {
 function fx_check_dates_format() {
 
   date -d "$DATE_START" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'Start date format is not recognized' \
-                          && sys_tip "${TIP_OPTION_date}"
-    
+  if [[ $(echo "$?") != 0 ]]; then
+    sys_error 'Start date format is not recognized'
+    sys_tip "${TIP_OPTION_date}"
+  fi
+  
   date -d "$DATE_END" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'End date format is not recognized' \
-                          && sys_tip "${TIP_OPTION_date}"
+  if [[ $(echo "$?") != 0 ]]; then
+    sys_error 'End date format is not recognized'
+    sys_tip "${TIP_OPTION_date}"
+  fi
 
-  # Check here pipe commands
+  date -d "now" "+${SRC_DATE_FORMAT}" > /dev/null 2>&1
+  if [[ $(echo "$?") != 0 ]]; then
+    sys_error 'Output date format is not recognized'
+    sys_tip "${TIP_OPTION_w}"
+  fi
 
 }
+
+# MAIN-PROGRAM FUNCTIONS
 
 function fx_find_files() {
 
@@ -402,7 +424,6 @@ function main() {
 
   fx_define_vars
   fx_getopts "$@"
-
   fx_check_required_options
   fx_define_const
   sys_is_abort
