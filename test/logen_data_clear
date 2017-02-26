@@ -16,4 +16,5 @@ rm -r mock_perfomance_some \
       mock_without_years \
       mock_without_century \
       mock_without_seconds \
+      mock_json \
       mock_temp_output

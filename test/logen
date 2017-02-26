@@ -13,24 +13,30 @@ function sys_usage() {
 
   echo "Usage: logen [options]... [date_start] [date_end]
   
-  Main flags:
-    -s (--step-sec)         - date iteration step (in seconds)
-    -d (--date-format)      - date format in \$(date) format for output
-    -g (--garbage-fields)   - garbage fields: count, length, separator &
-                              date field position (as \"%d,%d,\%d|\%s,%d\")
-    -o (--output)           - output \"path/fname_prefix\" (optional)
-    -b (--debug)            - show debug info (optional)
-    -e (--examples)         - show usage examples
-    -h (--help)             - show this info
+  Flags:
+    ${TIP_OPTION_s}
+    ${TIP_OPTION_d}
+    ${TIP_OPTION_g}
+    ${TIP_OPTION_o}
+    ${TIP_OPTION_j}
+    ${TIP_OPTION_b}
+    ${TIP_OPTION_e}
+    ${TIP_OPTION_h}
   
-  Dates flags:
-    - set in any format recognized by \$(date) command
-    - date_end is optional, by default is \"now\"
+  Arguments:
+    ${TIP_OPTION_date}
 
-  Version: 0.25
-    " \
+  Version: ${TIP_OPTION_ver}" \
   | sed 's/^\s\s//' 1>&2
   
+  exit 1
+}
+
+function sys_description() {
+  echo "Description: logen provides generate fake logs in different formats
+  For usage call: logen -h" \
+  | sed 's/^\s\s//' 1>&2
+
   exit 1
 }
 
@@ -60,6 +66,10 @@ function sys_error() {
   critical_error_flag="1"
 }
 
+function sys_tip() {
+  [[ "$@" ]] && echo "tip: $@" >&2
+}
+
 function sys_debug() {
   [[ "${DEBUG}" == 'true' ]] && echo -e "dbg: $@" >&2
 }
@@ -72,9 +82,23 @@ function sys_is_abort() {
   fi
 }
 
-# OPTION`S AND DEFINING FUNCTION
+# OPTIONS AND DEFINING FUNCTION
 
 function fx_define_vars(){
+
+  TIP_OPTION_s="-s (--step-sec)         - date iteration step (in seconds)"
+  TIP_OPTION_d="-d (--date-format)      - date format in \$(date) format for output"
+  TIP_OPTION_g="-g (--garbage-fields)   - garbage fields: count, length, separator &
+                                          date field position (as \"%d,%d,\%d|\%s,%d\")"
+  TIP_OPTION_o="-o (--output)           - output \"path/fname_prefix\" (optional)"
+  TIP_OPTION_j="-j (--json-output)      - output in json format"
+  TIP_OPTION_d="-b (--debug)            - show debug info (optional)"
+  TIP_OPTION_e="-e (--examples)         - show usage examples"
+  TIP_OPTION_h="-h (--help)             - show this info"
+    
+  TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
+  TIP_OPTION_ver="1.27"
+
   critical_error_flag=''
   DEBUG='false'
   
@@ -87,6 +111,8 @@ function fx_define_vars(){
   OUTPUT_FNAME=''
 
   GARB_FIELDS=''
+  JSON='false'
+
 }
 
 function fx_define_const() {
@@ -99,33 +125,33 @@ function fx_define_const() {
   readonly DATE_STEP
 
   readonly GARB_FIELDS
+  readonly JSON
 }
 
 function fx_getopts() {
 
   local OPTIND \
         flag
+  
+  # Throw to description if no options are passed
 
+  if [[ -z "$@" ]]; then
+    sys_description
+  fi
+  
   # Get main options
 
-  while getopts 'bhes:d:o:g:' flag
+  while getopts 'bhes:d:o:jg:' flag
   do
     case "${flag}" in
       
       b) DEBUG='true' ;;
+
       s) DATE_STEP="${OPTARG}" ;;
       d) DATE_FORMAT="${OPTARG}" ;;
-      
-      o)
-         OUTPUT_FNAME="${OPTARG}"
-         truncate --size 0 "${OUTPUT_FNAME}" >&2 \
-            || sys_error 'Option -o - can`t write test file'
-         ;;
-
-      g) GARB_FIELDS="${OPTARG}"
-         [[ $(grep -o "," <<< "${GARB_FIELDS}" | wc -l) != 3 ]] \
-            && sys_error 'Option -m failed'
-         ;;
+      o) OUTPUT_FNAME="${OPTARG}" ;;
+      j) JSON='true' ;;
+      g) GARB_FIELDS="${OPTARG}" ;;
 
       h) sys_usage ;;
       e) sys_examples ;;
@@ -146,26 +172,69 @@ function fx_getopts() {
 
 function fx_check_required_options() {
 
-  [[ -z "${DATE_STEP}" ]] && sys_error 'Option -s is required'
-  [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -d is required'
-  [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -o is required'
-  [[ -z "${GARB_FIELDS}" ]] && sys_error 'Option -g is required'
-  [[ -z "${DATE_START}" ]] && sys_error '\$1 as date_start is required'
-  [[ -z "${DATE_END}" ]] && sys_error '\$2 as date_end is required'
+  [[ -z "${DATE_STEP}" ]]   && sys_error 'Option -s is required' \
+                            && sys_tip "${TIP_OPTION_s}"
+  [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -d is required' \
+                            && sys_tip "${TIP_OPTION_d}"
+  [[ -z "${GARB_FIELDS}" ]] && sys_error 'Option -g is required' \
+                            && sys_tip "${TIP_OPTION_g}"
+  [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
+                            && sys_tip "${TIP_OPTION_date}"
+  [[ -z "${DATE_END}" ]]    && sys_error '$2 as date_end is required' \
+                            && sys_tip "${TIP_OPTION_date}"
+
+  # Clear tmp file and check avialabilities to write
+
+  if [[ ! -z "${OUTPUT_FNAME}" ]]; then
+
+    if [[ -d "${OUTPUT_FNAME}" ]]; then
+      sys_error 'Option -o - should be not path'
+      sys_tip "${TIP_OPTION_o}"
+    fi
+    
+    truncate --size 0 "${OUTPUT_FNAME}" 2>/dev/null
+    if [[ "$?" != 0 ]]; then
+      sys_error 'Option -o - can`t create test file'
+      sys_tip "${TIP_OPTION_o}"
+    fi
+
+    sys_debug "Output to: ${OUTPUT_FNAME}"
+  else
+    sys_debug "Output to: /dev/stdout"
+  fi
+
+  # Abort if critical errors are here, before next step
+
+  sys_is_abort
+
+  # Check other options for valid data
+
+  if [[ $(grep -o "," <<< "${GARB_FIELDS}" | wc -l) != 3 ]]; then
+    sys_error 'Option -m - not recognized format'
+    sys_tip "${TIP_OPTION_m}"
+  fi
 
 }
 
 function fx_check_dates_format() {
 
-  date -d "${DATE_START}" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'Start date format is not recognized'
-    
-  date -d "${DATE_END}" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'End date format is not recognized'
+  date -d "$DATE_START" > /dev/null 2>&1
+  if [[ $(echo "$?") != 0 ]]; then
+    sys_error 'Start date format is not recognized'
+    sys_tip "${TIP_OPTION_date}"
+  fi
+  
+  date -d "$DATE_END" > /dev/null 2>&1
+  if [[ $(echo "$?") != 0 ]]; then
+    sys_error 'End date format is not recognized'
+    sys_tip "${TIP_OPTION_date}"
+  fi
 
   date -d "now" "${DATE_FORMAT}" > /dev/null 2>&1
-  [[ $(echo "$?") != 0 ]] && sys_error 'Output date format is not recognized'
-
+  if [[ $(echo "$?") != 0 ]]; then
+    sys_error 'Output date format is not recognized'
+    sys_tip "${TIP_OPTION_o}"
+  fi
 
 }
 
@@ -213,19 +282,30 @@ function fx_form_garb() {
   # Return string before date field
 
   if [[ "${1}" == "left" ]]; then
-
+    
+    [[ "${JSON}" == "true" ]] && printf '{'
+    
     for ((i=1; i<${fields_date}; i++)); do
-      printf "${i}${garb_tpl}${fields_separator}"
+      [[ "${JSON}" == "false" ]] \
+        && printf "${i}${garb_tpl}${fields_separator}" \
+        || printf "\"${i}\":\"${garb_tpl}\"${fields_separator}"
     done
+
+    [[ "${JSON}" == "true" ]] && printf '"date":"'
   
   # Return string after date field
 
   else
-
+    
+    [[ "${JSON}" == "true" ]] && printf '"'
+   
     for ((i=$(((${fields_date}+1)));i<=${fields_count};i++)); do
-      printf "${fields_separator}${i}${garb_tpl}"
+      [[ "${JSON}" == 'false' ]] \
+      && printf "${fields_separator}${i}${garb_tpl}" \
+      || printf "${fields_separator}\"${i}\":\"${garb_tpl}\""
     done
 
+    [[ "${JSON}" == "true" ]] && printf '}'
   fi
 
 }
@@ -327,7 +407,7 @@ function fx_compare_stdout() {
   iter_end=$(date -d "${DATE_END}" +%s)
 
   while [[ "${iter_curr}" -le "${iter_end}" ]]; do
-
+    
     echo "${1}$(date -d "@${iter_curr}" "${DATE_FORMAT}")${2}"
 
     ((i++))
@@ -345,20 +425,23 @@ function main() {
   local garb_left \
         garb_right
 
+  # Define necessary options, vars and constants
+
   fx_define_vars
   fx_getopts "$@"
-  fx_define_const
-
   fx_check_required_options
+  fx_define_const
   sys_is_abort
-
   fx_check_dates_format
   sys_is_abort
   
+  # Form mock for left and right side
+
   garb_left="$(fx_form_garb "left")"
   garb_right="$(fx_form_garb "right")"
-  
   sys_debug "Garb example: ${garb_left}&&${garb_right}"
+
+  # Output fake logs to file or stdout
 
   if [[ -n "${OUTPUT_FNAME}" ]]; then
     fx_compare_fileoutput "$garb_left" "$garb_right"

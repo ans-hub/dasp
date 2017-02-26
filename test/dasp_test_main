@@ -165,3 +165,18 @@ items=$(../dasp -s mock_timestamp_date/ \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
 
 sys_message "${assume}" "${items}"
+
+# Testing case 10
+
+echo "Testing case 10"
+
+assume=6
+items=$(../dasp -s mock_json/ \
+            -f "data*" \
+            -d "\"" \
+            -w "d %Y-%b-%d, t %H:%M:%S" \
+            -k "16" \
+            -o 1 \
+            "2013-12-31 02:00:00" "2014-01-02 10:00:30" | wc -l)
+
+sys_message "${assume}" "${items}"

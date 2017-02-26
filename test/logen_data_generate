@@ -17,6 +17,7 @@ mkdir mock_perfomance_some \
       mock_without_years \
       mock_without_century \
       mock_without_seconds \
+      mock_json \
       mock_temp_output
 
 echo -e "\nForm perfomance data - some files"
@@ -90,3 +91,13 @@ echo -e "\nForm data without seconds, several fields"
         -g "9,15,\040,2" \
         -b \
         "2008-02-01 13:00:00" "2008-03-05 18:12:00"
+
+echo -e "\nForm data in json format"
+
+./logen -o "mock_json/data" \
+        -d "+d %Y-%b-%d, t %H:%M:%S" \
+        -s 32192 \
+        -g "7,5,\054,4" \
+        -j \
+        -b \
+        "2013-12-30 02:00:00" "2014-01-12 10:00:30"
