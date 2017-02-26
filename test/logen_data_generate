@@ -23,7 +23,7 @@ mkdir mock_perfomance_some \
 echo -e "\nForm perfomance data - some files"
 
 ./logen -o "mock_perfomance_some/data" \
-        -d "+[%Y-%b-%d:%H:%M:%S" \
+        -d "[%Y-%b-%d:%H:%M:%S" \
         -s 4 \
         -g "15,10,\040,3" \
         -b \
@@ -31,7 +31,7 @@ echo -e "\nForm perfomance data - some files"
 
 echo -e "\nForm perfomance data - one file"
 
-./logen -d "+[%Y-%b-%d:%H:%M:%S" \
+./logen -d "[%Y-%b-%d:%H:%M:%S" \
         -s 4 \
         -g "15,10,\040,3" \
         -b \
@@ -41,7 +41,7 @@ echo -e "\nForm perfomance data - one file"
 echo -e "\nForm data for regular dates"
 
 ./logen -o "mock_regular_date/data" \
-        -d "+%H:%M:%S at %Y-%m-%d" \
+        -d "%H:%M:%S at %Y-%m-%d" \
         -s 198 \
         -g "9,15,;,2" \
         -b \
@@ -50,7 +50,7 @@ echo -e "\nForm data for regular dates"
 echo -e "\nForm data for timestamp dates"
 
 ./logen -o "mock_timestamp_date/data" \
-        -d "+%s" \
+        -d "%s" \
         -s 198 \
         -g "9,15,;,2" \
         -b \
@@ -59,7 +59,7 @@ echo -e "\nForm data for timestamp dates"
 echo -e "\nForm data for custom months"
 
 ./logen -o "mock_custom_months/data" \
-        -d "+%Y-únor-%d:%H:%M:%S" \
+        -d "%Y-únor-%d:%H:%M:%S" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
@@ -68,7 +68,7 @@ echo -e "\nForm data for custom months"
 echo -e "\nForm data without years, several fields"
 
 ./logen -o "mock_without_years/data" \
-        -d "+%b-%d:%H:%M:%S" \
+        -d "%b-%d:%H:%M:%S" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
@@ -77,7 +77,7 @@ echo -e "\nForm data without years, several fields"
 echo -e "\nForm data without century, several fields"
 
 ./logen -o "mock_without_century/data" \
-        -d "+%H:%M:%S %y-%b-%d" \
+        -d "%H:%M:%S %y-%b-%d" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
@@ -86,7 +86,7 @@ echo -e "\nForm data without century, several fields"
 echo -e "\nForm data without seconds, several fields"
 
 ./logen -o "mock_without_seconds/data" \
-        -d "+%H:%M %y-%b-%d" \
+        -d "%H:%M %y-%b-%d" \
         -s 198 \
         -g "9,15,\040,2" \
         -b \
@@ -95,7 +95,7 @@ echo -e "\nForm data without seconds, several fields"
 echo -e "\nForm data in json format"
 
 ./logen -o "mock_json/data" \
-        -d "+d %Y-%b-%d, t %H:%M:%S" \
+        -d "d %Y-%b-%d, t %H:%M:%S" \
         -s 32192 \
         -g "7,5,\054,4" \
         -j \

@@ -13,9 +13,9 @@ function sys_usage() {
 
   echo "Usage: logen [options]... [date_start] [date_end]
   
-  Flags:
-    ${TIP_OPTION_s}
+  Options:
     ${TIP_OPTION_d}
+    ${TIP_OPTION_s}
     ${TIP_OPTION_g}
     ${TIP_OPTION_o}
     ${TIP_OPTION_j}
@@ -23,18 +23,25 @@ function sys_usage() {
     ${TIP_OPTION_e}
     ${TIP_OPTION_h}
   
-  Arguments:
+  Positional parametrs:
     ${TIP_OPTION_date}
 
-  Version: ${TIP_OPTION_ver}" \
+  Version:   ${TIP_ver}
+  Contact:   ${TIP_contact}"\
   | sed 's/^\s\s//' 1>&2
   
   exit 1
 }
 
 function sys_description() {
-  echo "Description: logen provides generate fake logs in different formats
-  For usage call: logen -h" \
+  echo "Logen (Logs generator) - bash script, provides generate fake logs in different
+  formats to stdout or to files day by day for defined date range. For examples see
+  /test directory and its scripts
+
+  For usage call: logen -h
+
+  Version:   ${TIP_ver}
+  Contact:   ${TIP_contact}"\
   | sed 's/^\s\s//' 1>&2
 
   exit 1
@@ -43,19 +50,16 @@ function sys_description() {
 function sys_examples() {
 
   echo "Example:
-
     To form logs in \"test\" dir in files starts with \"log\", preffered log
     garbage string is \"1238 1231 [12:44:00_28-Jan-2017 3213 2142\" with step
     eq 20 sec, for 2 days ago:
 
-    ./logen -s 20 -d \"[+%H:%M:%S_%d-%b-%Y]\" -o path/fname -g "4,0,\\040,3"
+    ./logen -s 20 -d \"[%H:%M:%S_%d-%b-%Y]\" -o path/fname -g \"4,0,\\040,3\"
       \"2 days ago\"
 
     LoGen may be used in soft, that requries much text data for the qa testing,
     and when preffered not keep logs in test dir of soft, but quickly deploy it
-    by custom developer
-
-    " \
+    by custom developer" \
   | sed 's/^\s\s//' 1>&2
 
   exit 1
@@ -86,18 +90,19 @@ function sys_is_abort() {
 
 function fx_define_vars(){
 
-  TIP_OPTION_s="-s (--step-sec)         - date iteration step (in seconds)"
-  TIP_OPTION_d="-d (--date-format)      - date format in \$(date) format for output"
-  TIP_OPTION_g="-g (--garbage-fields)   - garbage fields: count, length, separator &
-                                          date field position (as \"%d,%d,\%d|\%s,%d\")"
-  TIP_OPTION_o="-o (--output)           - output \"path/fname_prefix\" (optional)"
-  TIP_OPTION_j="-j (--json-output)      - output in json format"
-  TIP_OPTION_d="-b (--debug)            - show debug info (optional)"
-  TIP_OPTION_e="-e (--examples)         - show usage examples"
-  TIP_OPTION_h="-h (--help)             - show this info"
-    
+  TIP_OPTION_d="-d | date: format in \$(date) command format output (without first +)"
+  TIP_OPTION_s="-s | date: iteration step (in seconds)"
+  TIP_OPTION_o="-o | output to \"path/fname_prefix\" (optional)"
+  TIP_OPTION_j="-j | output in json format (optional)"
+  TIP_OPTION_g="-g | garbage string if [count,lenght,separator,datepos] format"
+  TIP_OPTION_b="-b | other: show debug info (optional)"
+  TIP_OPTION_e="-e | other: show examples (optional)"
+  TIP_OPTION_h="-h | other: show help info (optional)"  
   TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
-  TIP_OPTION_ver="1.27"
+  
+  TIP_ver="1.28"
+  TIP_copyright="Novoselov Ans @ 2017"
+  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
 
   critical_error_flag=''
   DEBUG='false'
@@ -106,7 +111,7 @@ function fx_define_vars(){
   DATE_END=''
 
   DATE_FORMAT=''
-  DATE_STEP=0
+  DATE_STEP=''
 
   OUTPUT_FNAME=''
 
@@ -145,13 +150,13 @@ function fx_getopts() {
   do
     case "${flag}" in
       
-      b) DEBUG='true' ;;
-
-      s) DATE_STEP="${OPTARG}" ;;
       d) DATE_FORMAT="${OPTARG}" ;;
+      s) DATE_STEP="${OPTARG}" ;;
+      g) GARB_FIELDS="${OPTARG}" ;;
+      
       o) OUTPUT_FNAME="${OPTARG}" ;;
       j) JSON='true' ;;
-      g) GARB_FIELDS="${OPTARG}" ;;
+      b) DEBUG='true' ;;
 
       h) sys_usage ;;
       e) sys_examples ;;
@@ -172,10 +177,10 @@ function fx_getopts() {
 
 function fx_check_required_options() {
 
-  [[ -z "${DATE_STEP}" ]]   && sys_error 'Option -s is required' \
-                            && sys_tip "${TIP_OPTION_s}"
   [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -d is required' \
                             && sys_tip "${TIP_OPTION_d}"
+  [[ -z "${DATE_STEP}" ]]   && sys_error 'Option -s is required' \
+                            && sys_tip "${TIP_OPTION_s}"
   [[ -z "${GARB_FIELDS}" ]] && sys_error 'Option -g is required' \
                             && sys_tip "${TIP_OPTION_g}"
   [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
@@ -205,13 +210,13 @@ function fx_check_required_options() {
 
   # Abort if critical errors are here, before next step
 
-  sys_is_abort
+  # sys_is_abort
 
   # Check other options for valid data
 
   if [[ $(grep -o "," <<< "${GARB_FIELDS}" | wc -l) != 3 ]]; then
-    sys_error 'Option -m - not recognized format'
-    sys_tip "${TIP_OPTION_m}"
+    sys_error 'Option -g - not recognized format'
+    sys_tip "${TIP_OPTION_g}"
   fi
 
 }
@@ -230,10 +235,10 @@ function fx_check_dates_format() {
     sys_tip "${TIP_OPTION_date}"
   fi
 
-  date -d "now" "${DATE_FORMAT}" > /dev/null 2>&1
+  date -d "now" "+${DATE_FORMAT}" > /dev/null 2>&1
   if [[ $(echo "$?") != 0 ]]; then
-    sys_error 'Output date format is not recognized'
-    sys_tip "${TIP_OPTION_o}"
+    sys_error 'Option -d - format is not recognized'
+    sys_tip "${TIP_OPTION_d}"
   fi
 
 }
@@ -377,7 +382,7 @@ function fx_compare_fileoutput() {
 
     fi
     
-    echo "${1}$(date -d "@${iter_curr}" "${DATE_FORMAT}")${2}" >> $output_file
+    echo "${1}$(date -d "@${iter_curr}" "+${DATE_FORMAT}")${2}" >> $output_file
 
     ((loop_curr++))
     ((items_total++))
@@ -408,7 +413,7 @@ function fx_compare_stdout() {
 
   while [[ "${iter_curr}" -le "${iter_end}" ]]; do
     
-    echo "${1}$(date -d "@${iter_curr}" "${DATE_FORMAT}")${2}"
+    echo "${1}$(date -d "@${iter_curr}" "+${DATE_FORMAT}")${2}"
 
     ((i++))
     ((items_total++))
@@ -431,7 +436,7 @@ function main() {
   fx_getopts "$@"
   fx_check_required_options
   fx_define_const
-  sys_is_abort
+  # sys_is_abort
   fx_check_dates_format
   sys_is_abort
   
