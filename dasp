@@ -108,7 +108,7 @@ function fx_define_vars() {
   TIP_OPTION_h="-h | other: show help info (optional)"
   TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
   
-  TIP_ver="1.03"
+  TIP_ver="1.04"
   TIP_copyright="Ans Novoselov @ 2017"
   TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
 
@@ -419,13 +419,17 @@ function fx_get_data() {
       show_cmd="cat"
     fi
 
-    # Cat file and pipe to awk command
+    # Read file and send stream to awk command
 
-    if [[ -n "${TMP_FILE}" ]]; then                       # tmp file
+    if [[ -n "${TMP_FILE}" ]]; then                       # send res to tmp file
       $show_cmd ${current_file} | awk_cmd >> ${TMP_FILE}
-    else                                                  # std out
-      content="$(cat ${current_file} | awk_cmd )"
-      [[ -n "${content}" ]] && echo "${content}" && content=''
+    
+    else                                                  # send res to stdout
+      content="$($show_cmd ${current_file} | awk_cmd )"
+      if [[ -n "${content}" ]]; then
+        echo "${content}"
+        content=''
+      fi
     fi
 
   done <<< "${files_list}"
