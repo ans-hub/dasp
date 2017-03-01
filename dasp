@@ -12,7 +12,7 @@
 
 function init_program_vars() {
 
-  # Capsed are declared as variables, in fx_getopt sets as constants
+  # Capsed vars in fx_getopt() will have been set as constants
 
   DEBUG='false'
   critical_error_flag=''
@@ -91,7 +91,7 @@ function sys_usage() {
 }
 
 function sys_description() {
-  
+
   echo "${TIP_description}
 
   For usage call: dasp -h

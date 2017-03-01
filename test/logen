@@ -7,6 +7,50 @@
 #
 #_______________________________________________________________
 
+# INIT VARS AND CONST FUNCTIONS
+
+function init_program_vars() {
+
+  # Capsed vars in fx_getopt() will have been set as constants
+
+  DEBUG='false'
+  critical_error_flag=''
+
+  DATE_START=''
+  DATE_END=''
+
+  DATE_FORMAT=''
+  DATE_STEP=''
+
+  OUTPUT_FNAME=''
+
+  MOCK_FIELDS=''
+  JSON='false'
+}
+
+function init_help_vars() {
+
+  # Section contains constants for build help and tips while execute
+
+  TIP_description="Logen (Logs generator) - bash script, provides generate fake logs in different
+  formats to stdout or to files day by day for defined date range. For examples see
+  /test directory and its scripts."
+
+  TIP_OPTION_d="-d | date: format in \$(date) command format output (without first +)"
+  TIP_OPTION_s="-s | date: iteration step (in seconds)"
+  TIP_OPTION_o="-o | output to \"path/fname_prefix\" (optional)"
+  TIP_OPTION_j="-j | output in json format (optional)"
+  TIP_OPTION_g="-g | mock string if [count,lenght,separator,datepos] format"
+  TIP_OPTION_b="-b | other: show debug info (optional)"
+  TIP_OPTION_h="-h | other: show help info (optional)"  
+  TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
+  
+  TIP_ver="1.31"
+  TIP_copyright="Ans Novoselov @ 2017"
+  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
+
+}
+
 # SYSTEM FUNCTIONS
 
 function sys_usage() {
@@ -34,32 +78,13 @@ function sys_usage() {
 }
 
 function sys_description() {
-  echo "Logen (Logs generator) - bash script, provides generate fake logs in different
-  formats to stdout or to files day by day for defined date range. For examples see
-  /test directory and its scripts
+  
+  echo "${TIP_description}
 
   For usage call: logen -h
 
   Version:   ${TIP_ver}
   Contact:   ${TIP_contact}"\
-  | sed 's/^\s\s//' 1>&2
-
-  exit 1
-}
-
-function sys_examples() {
-
-  echo "Example:
-    To form logs in \"test\" dir in files starts with \"log\", preffered log
-    garbage string is \"1238 1231 [12:44:00_28-Jan-2017 3213 2142\" with step
-    eq 20 sec, for 2 days ago:
-
-    ./logen -s 20 -d \"[%H:%M:%S_%d-%b-%Y]\" -o path/fname -g \"4,0,\\040,3\"
-      \"2 days ago\"
-
-    LoGen may be used in soft, that requries much text data for the qa testing,
-    and when preffered not keep logs in test dir of soft, but quickly deploy it
-    by custom developer" \
   | sed 's/^\s\s//' 1>&2
 
   exit 1
@@ -86,52 +111,28 @@ function sys_is_abort() {
   fi
 }
 
-# OPTIONS AND DEFINING FUNCTION
-
-function fx_define_vars(){
-
-  TIP_OPTION_d="-d | date: format in \$(date) command format output (without first +)"
-  TIP_OPTION_s="-s | date: iteration step (in seconds)"
-  TIP_OPTION_o="-o | output to \"path/fname_prefix\" (optional)"
-  TIP_OPTION_j="-j | output in json format (optional)"
-  TIP_OPTION_g="-g | garbage string if [count,lenght,separator,datepos] format"
-  TIP_OPTION_b="-b | other: show debug info (optional)"
-  TIP_OPTION_e="-e | other: show examples (optional)"
-  TIP_OPTION_h="-h | other: show help info (optional)"  
-  TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
+function sys_workdir() {
   
-  TIP_ver="1.28"
-  TIP_copyright="Novoselov Ans @ 2017"
-  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
+  # Solution from http://stackoverflow.com/a/697552/7489927
 
-  critical_error_flag=''
-  DEBUG='false'
+  local source \
+        dir
+
+  source="${BASH_SOURCE[0]}"
+
+  while [ -h "$source" ]; do
+      dir="$( cd -P "$( dirname "$source" )" && pwd )"
+      source="$( readlink "$source" )"
+      [[ $source != /* ]] && source="$dir/$source"
+  done
+
+  dir="$( cd -P "$( dirname "$source" )" && pwd )"
   
-  DATE_START=''
-  DATE_END=''
-
-  DATE_FORMAT=''
-  DATE_STEP=''
-
-  OUTPUT_FNAME=''
-
-  GARB_FIELDS=''
-  JSON='false'
-
+  echo "$dir"
+  sys_debug "script dir: ${dir}"
 }
 
-function fx_define_const() {
-  readonly DEBUG
-  
-  readonly DATE_START
-  readonly DATE_END
-
-  readonly DATE_FORMAT
-  readonly DATE_STEP
-
-  readonly GARB_FIELDS
-  readonly JSON
-}
+# OPTIONS AND CHECKING FUNCTIONS
 
 function fx_getopts() {
 
@@ -144,22 +145,32 @@ function fx_getopts() {
     sys_description
   fi
   
-  # Get main options
+  # Get options
 
-  while getopts 'bhes:d:o:jg:' flag
+  while getopts 'bhs:d:o:jg:' flag
   do
     case "${flag}" in
       
-      d) DATE_FORMAT="${OPTARG}" ;;
-      s) DATE_STEP="${OPTARG}" ;;
-      g) GARB_FIELDS="${OPTARG}" ;;
-      
-      o) OUTPUT_FNAME="${OPTARG}" ;;
-      j) JSON='true' ;;
-      b) DEBUG='true' ;;
+      b) DEBUG='true'
+         readonly DEBUG
+         ;;
+      d) DATE_FORMAT="${OPTARG}"
+         readonly DATE_FORMAT
+         ;;
+      s) DATE_STEP="${OPTARG}"
+         readonly DATE_STEP
+         ;;
+      g) MOCK_FIELDS="${OPTARG}"
+         readonly MOCK_FIELDS
+         ;;
+      o) OUTPUT_FNAME="${OPTARG}"
+         readonly OUTPUT_FNAME
+         ;;
+      j) JSON='true'
+         readonly JSON
+         ;;
 
       h) sys_usage ;;
-      e) sys_examples ;;
       ?) sys_error ;;
 
     esac
@@ -167,7 +178,7 @@ function fx_getopts() {
   
   sys_debug "script parametrs: $@";
 
-  # Get dates
+  # Get dates from positional parametrs
 
   shift "$((OPTIND-1))"
 
@@ -177,18 +188,32 @@ function fx_getopts() {
 
 function fx_check_required_options() {
 
+  # Check required options
+  
   [[ -z "${DATE_FORMAT}" ]] && sys_error 'Option -d is required' \
                             && sys_tip "${TIP_OPTION_d}"
   [[ -z "${DATE_STEP}" ]]   && sys_error 'Option -s is required' \
                             && sys_tip "${TIP_OPTION_s}"
-  [[ -z "${GARB_FIELDS}" ]] && sys_error 'Option -g is required' \
+  [[ -z "${MOCK_FIELDS}" ]] && sys_error 'Option -g is required' \
                             && sys_tip "${TIP_OPTION_g}"
+
+  # Check required positional parametrs
+
   [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
                             && sys_tip "${TIP_OPTION_date}"
   [[ -z "${DATE_END}" ]]    && sys_error '$2 as date_end is required' \
                             && sys_tip "${TIP_OPTION_date}"
 
-  # Clear tmp file and check avialabilities to write
+
+  # Abort if critical errors are here, before next step
+
+  sys_is_abort
+
+}
+
+function fx_data_validation() {
+  
+  # Validation of tmp file
 
   if [[ ! -z "${OUTPUT_FNAME}" ]]; then
 
@@ -208,20 +233,14 @@ function fx_check_required_options() {
     sys_debug "Output to: /dev/stdout"
   fi
 
-  # Abort if critical errors are here, before next step
+  # Validation of mock fields
 
-  # sys_is_abort
-
-  # Check other options for valid data
-
-  if [[ $(grep -o "," <<< "${GARB_FIELDS}" | wc -l) != 3 ]]; then
+  if [[ $(grep -o "," <<< "${MOCK_FIELDS}" | wc -l) != 3 ]]; then
     sys_error 'Option -g - not recognized format'
     sys_tip "${TIP_OPTION_g}"
   fi
 
-}
-
-function fx_check_dates_format() {
+  # Validation of date/time and format options
 
   date -d "$DATE_START" > /dev/null 2>&1
   if [[ $(echo "$?") != 0 ]]; then
@@ -241,42 +260,45 @@ function fx_check_dates_format() {
     sys_tip "${TIP_OPTION_d}"
   fi
 
+  # Abort program, if critical errors was
+
+  sys_is_abort
 }
 
 # MAIN-PROGRAM FUNCTIONS
 
-function fx_form_garb() {
+function fx_form_mock() {
 
   local i \
-        garb_format \
+        mock_format \
         side \
         fields_count \
         fields_length \
         fields_separator \
         fields_date \
-        garb_tpl
+        mock_tpl
   
   # Split array
 
-  gf="${GARB_FIELDS}"
-  garb_format=(${GARB_FIELDS//,/ })
+  gf="${MOCK_FIELDS}"
+  mock_format=(${MOCK_FIELDS//,/ })
   
   # Fill fields parametr variables
 
-  fields_count="${garb_format[0]}"
+  fields_count="${mock_format[0]}"
 
-  if [[ "${garb_format[1]}" -eq 0 ]]; then
+  if [[ "${mock_format[1]}" -eq 0 ]]; then
     fields_length=$(((RANDOM%10)+1))
   else
-    fields_length="${garb_format[1]}"
+    fields_length="${mock_format[1]}"
   fi
 
-  fields_separator="${garb_format[2]}"
-  fields_date="${garb_format[3]}"
+  fields_separator="${mock_format[2]}"
+  fields_date="${mock_format[3]}"
   
   # Form temp string with defined length
   
-  garb_tpl=$(echo \
+  mock_tpl=$(echo \
   $(for ((i=1; i<=${fields_length}; i++))
     do
       printf '%s' "${RANDOM:0:1}"
@@ -292,8 +314,8 @@ function fx_form_garb() {
     
     for ((i=1; i<${fields_date}; i++)); do
       [[ "${JSON}" == "false" ]] \
-        && printf "${i}${garb_tpl}${fields_separator}" \
-        || printf "\"${i}\":\"${garb_tpl}\"${fields_separator}"
+        && printf "${i}${mock_tpl}${fields_separator}" \
+        || printf "\"${i}\":\"${mock_tpl}\"${fields_separator}"
     done
 
     [[ "${JSON}" == "true" ]] && printf '"date":"'
@@ -306,8 +328,8 @@ function fx_form_garb() {
    
     for ((i=$(((${fields_date}+1)));i<=${fields_count};i++)); do
       [[ "${JSON}" == 'false' ]] \
-      && printf "${fields_separator}${i}${garb_tpl}" \
-      || printf "${fields_separator}\"${i}\":\"${garb_tpl}\""
+      && printf "${fields_separator}${i}${mock_tpl}" \
+      || printf "${fields_separator}\"${i}\":\"${mock_tpl}\""
     done
 
     [[ "${JSON}" == "true" ]] && printf '}'
@@ -427,31 +449,24 @@ function fx_compare_stdout() {
 
 function main() {
 
-  local garb_left \
-        garb_right
+  local mock_left \
+        mock_right
 
-  # Define necessary options, vars and constants
-
-  fx_define_vars
+  init_program_vars
+  init_help_vars
+  
   fx_getopts "$@"
   fx_check_required_options
-  fx_define_const
-  # sys_is_abort
-  fx_check_dates_format
-  sys_is_abort
-  
-  # Form mock for left and right side
+  fx_data_validation
 
-  garb_left="$(fx_form_garb "left")"
-  garb_right="$(fx_form_garb "right")"
-  sys_debug "Garb example: ${garb_left}&&${garb_right}"
-
-  # Output fake logs to file or stdout
+  mock_left="$(fx_form_mock "left")"
+  mock_right="$(fx_form_mock "right")"
+  sys_debug "Mock example: ${mock_left}&&${mock_right}"
 
   if [[ -n "${OUTPUT_FNAME}" ]]; then
-    fx_compare_fileoutput "$garb_left" "$garb_right"
+    fx_compare_fileoutput "$mock_left" "$mock_right"
   else
-    fx_compare_stdout "$garb_left" "$garb_right"
+    fx_compare_stdout "$mock_left" "$mock_right"
   fi
 
 }
