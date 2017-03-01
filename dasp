@@ -1,11 +1,66 @@
 #!/bin/bash
 #
-# Data spider - is performing getting data for defined period
-# from any data source
+# Dasp (Data spider) - is performing getting data for defined
+# period from any data source
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 #
 #_______________________________________________________________
+
+
+# INIT VARS AND CONST FUNCTIONS
+
+function init_program_vars() {
+
+  # Capsed are declared as variables, in fx_getopt sets as constants
+
+  DEBUG='false'
+  critical_error_flag=''
+
+  TMP_FILE=''
+
+  DATE_START=''
+  DATE_END=''
+  DATE_OFFSET=0
+
+  SRC_DATE_FORMAT=''
+  SRC_DATE_FIELD=''
+  SRC_DATA_FNAME=''
+  SRC_DATA_PATH=''
+  SRC_DATA_SEPAR=''
+  SRC_BY_MTIME='false'
+  
+  MONTHS_CUSTOM=''
+
+}
+
+function init_help_vars() {
+
+  # Section contains constants for build help and tips while execute
+
+  TIP_description="Dasp (Data spider) - bash script, provides get data for date range from
+  text sources, which are a fields, separated by some ASCII chars. One or
+  more of the fields must contains date - time in any format. For example
+  apache, nginx server logs, json format, syslogs, etc."
+
+  TIP_OPTION_s="-s | data source: directory contains data source"
+  TIP_OPTION_f="-f | data source: filenames pattern"
+  TIP_OPTION_d="-d | data source: fields separators"
+  TIP_OPTION_k="-k | data source: field(s), contains date/time"
+  TIP_OPTION_w="-w | data source: date format, recognized by \$date (without first +)"
+  TIP_OPTION_o="-o | data source: days offset (+/-) range while search files (optional)"
+  TIP_OPTION_M="-M | data source: user defined 12 months, separated by commas (optional)"
+  TIP_OPTION_r="-r | data source: only in date range by mtime (optional)"
+  TIP_OPTION_t="-t | other: use temp file for awk instead of memory (optional)"
+  TIP_OPTION_b="-b | other: show debug info (optional)"
+  TIP_OPTION_h="-h | other: show help info (optional)"
+  TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
+  
+  TIP_ver="1.05"
+  TIP_copyright="Ans Novoselov @ 2017"
+  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
+
+}
 
 # SYSTEM FUNCTIONS
 
@@ -36,9 +91,8 @@ function sys_usage() {
 }
 
 function sys_description() {
-  echo "Dasp (Data spider) - bash script, provides get data for date range from
-  text sources, which are a fields, separated by some ASCII chars. One or
-  more of the fields must contains date/time in any format.
+  
+  echo "${TIP_description}
 
   For usage call: dasp -h
 
@@ -70,8 +124,6 @@ function sys_is_abort() {
   fi
 }
 
-# OPTIONS AND DEFINING FUNCTIONS
-
 function sys_workdir() {
   
   # Solution from http://stackoverflow.com/a/697552/7489927
@@ -93,46 +145,7 @@ function sys_workdir() {
   sys_debug "script dir: ${dir}"
 }
 
-function fx_define_vars() {
-
-  TIP_OPTION_s="-s | data source: directory contains data source"
-  TIP_OPTION_f="-f | data source: filenames pattern"
-  TIP_OPTION_d="-d | data source: fields separators"
-  TIP_OPTION_k="-k | data source: field(s), contains date/time"
-  TIP_OPTION_w="-w | data source: date format, recognized by \$date (without first +)"
-  TIP_OPTION_o="-o | data source: days offset (+/-) range while search files (optional)"
-  TIP_OPTION_M="-M | data source: user defined 12 months, separated by commas (optional)"
-  TIP_OPTION_r="-r | data source: only in date range by mtime (optional)"
-  TIP_OPTION_t="-t | other: use temp file for awk instead of memory (optional)"
-  TIP_OPTION_b="-b | other: show debug info (optional)"
-  TIP_OPTION_h="-h | other: show help info (optional)"
-  TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
-  
-  TIP_ver="1.04"
-  TIP_copyright="Ans Novoselov @ 2017"
-  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
-
-  critical_error_flag=''
-  DEBUG='false'
-
-  TMP_FILE=''
-
-  DATE_START=''
-  DATE_END=''
-  
-  DATE_OFFSET=0
-
-  SRC_DATE_FORMAT=''
-  SRC_DATE_FIELD=''
-  
-  SRC_DATA_FNAME=''
-  SRC_DATA_PATH=''
-  SRC_DATA_SEPAR=''
-  SRC_BY_MTIME='false'
-  
-  MONTHS_CUSTOM=''
-  
-}
+# OPTIONS AND CHECKING FUNCTIONS
 
 function fx_getopts() {
 
@@ -145,23 +158,42 @@ function fx_getopts() {
     sys_description
   fi
 
-  # Get main options
+  # Get options
 
   while getopts 'bhw:k:f:d:s:m:M:o:rt:p:' flag
   do
     case "${flag}" in
     
-      b) DEBUG='true' ;;
-      t) TMP_FILE="${OPTARG}" ;;
-      
-      k) SRC_DATE_FIELD="${OPTARG}" ;;
-      f) SRC_DATA_FNAME="${OPTARG}" ;;
-      d) SRC_DATA_SEPAR="${OPTARG}" ;;
-      w) SRC_DATE_FORMAT="${OPTARG}" ;;
-      s) SRC_DATA_PATH="${OPTARG}" ;;
-      M) MONTHS_CUSTOM="${OPTARG}" ;;
-      o) DATE_OFFSET="${OPTARG}" ;;
-      r) SRC_BY_MTIME='true' ;;
+      b) DEBUG='true'
+         readonly DEBUG
+         ;;
+      t) TMP_FILE="${OPTARG}"
+         readonly TMP_FILE
+         ;;
+      k) SRC_DATE_FIELD="${OPTARG}"
+         readonly SRC_DATE_FIELD
+         ;;
+      f) SRC_DATA_FNAME="${OPTARG}"
+         readonly SRC_DATA_FNAME
+         ;;
+      d) SRC_DATA_SEPAR="${OPTARG}"
+         readonly SRC_DATA_SEPAR
+         ;;
+      w) SRC_DATE_FORMAT="${OPTARG}"
+         readonly SRC_DATE_FORMAT
+         ;;
+      s) SRC_DATA_PATH="${OPTARG}"
+         readonly SRC_DATA_PATH
+         ;;
+      M) MONTHS_CUSTOM="${OPTARG}"
+         readonly MONTHS_CUSTOM
+         ;;
+      o) DATE_OFFSET="${OPTARG}"
+         readonly DATE_OFFSET
+         ;;
+      r) SRC_BY_MTIME='true'
+         readonly SRC_BY_MTIME
+         ;;
 
       h) sys_usage ;;
       ?) sys_error ;;
@@ -171,7 +203,7 @@ function fx_getopts() {
   
   sys_debug "script parametrs: $@";
 
-  # Get dates
+  # Get dates from positional parametrs
 
   shift "$((OPTIND-1))"
 
@@ -180,32 +212,9 @@ function fx_getopts() {
 
 }
 
-function fx_define_const() {
-
-  readonly TMP_FILE
-  
-  readonly DEBUG
-
-  readonly DATE_START
-  readonly DATE_END
-  
-  readonly DATE_OFFSET
-
-  readonly SRC_DATE_FORMAT
-  readonly SRC_DATE_FIELD
-  
-  readonly SRC_DATA_FNAME
-  readonly SRC_DATA_PATH
-  readonly SRC_DATA_SEPAR
-  
-  readonly MONTHS_CUSTOM
-  readonly PIPE
-
-}
-
 function fx_check_required_options() {
   
-  # Check other required options
+  # Check required options
 
   [[ -z "${SRC_DATE_FORMAT}" ]] && sys_error 'option -w is required' \
                                 && sys_tip "${TIP_OPTION_w}"
@@ -218,14 +227,22 @@ function fx_check_required_options() {
   [[ -z "${SRC_DATA_PATH}" ]]   && sys_error 'option -s is required' \
                                 && sys_tip "${TIP_OPTION_s}"
   
-  # Check required dates options
+  # Check required positional parametrs
 
   [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
                             && sys_tip "${TIP_OPTION_date}"
   [[ -z "${DATE_END}" ]]    && sys_error '$2 as date_end is required' \
                             && sys_tip "${TIP_OPTION_date}"
+  
+  # Abort if critical errors are here, before next step
 
-  # Clear tmp file and check avialabilities to write
+  sys_is_abort
+
+}
+
+function fx_data_validation() {
+
+  # Validation of tmp file
 
   if [[ ! -z "${TMP_FILE}" ]]; then
 
@@ -245,52 +262,21 @@ function fx_check_required_options() {
     sys_debug "Work without temp file"
   fi
 
-  # Abort if critical errors are here, before next step
-
-  sys_is_abort
-
-  # Check other options for valid data
+  # Validation of path to source data
 
   if [[ ! -d "${SRC_DATA_PATH}" ]]; then
     sys_error 'Option -s - path is not exists'
     sys_tip "${TIP_OPTION_s}"
   fi
 
+  # Validation of date offset
+
   if [[ "${DATE_OFFSET}" != 0 && ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
     sys_error 'Option -o - isn`t digit'
     sys_tip "${TIP_OPTION_o}"
   fi
 
-  # Check and form custom months from date format
-
-  if [[ -n ${MONTHS_CUSTOM} ]]; then
-
-    if [[ $(echo "${MONTHS_CUSTOM}" | grep -o "," | wc -l) != 11 ]]; then
-      sys_error 'Option -M - count of custom months must be 12 over ","'
-      sys_tip "${TIP_OPTION_M}"
-    fi
-
-  else
-
-    if   [[ "${SRC_DATE_FORMAT}" =~ "%m" ]]; then
-      MONTHS_CUSTOM="01,02,03,04,05,06,07,08,09,10,11,12"
-    elif [[ "${SRC_DATE_FORMAT}" =~ "%b" ]]; then
-      MONTHS_CUSTOM="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec"
-    elif [[ "${SRC_DATE_FORMAT}" =~ "%s" ]]; then
-      MONTHS_CUSTOM="01,02,03,04,05,06,07,08,09,10,11,12"
-    elif [[ "${SRC_DATE_FORMAT}" =~ "%B" ]]; then
-      MONTHS_CUSTOM="January,Febrary,Marth,April,May,June,Jule,August,September,October,
-                                                                      November,December"
-    else
-      sys_error 'Option -w - can not recognize months format in date format'
-      sys_tip "${TIP_OPTION_w}"
-    fi
-  
-  fi
-  
-}
-
-function fx_check_dates_format() {
+  # Validation of date/time and format options
 
   date -d "$DATE_START" > /dev/null 2>&1
   if [[ $(echo "$?") != 0 ]]; then
@@ -310,9 +296,53 @@ function fx_check_dates_format() {
     sys_tip "${TIP_OPTION_w}"
   fi
 
+  # Validation of months format in date format
+
+  if [[ ! "${SRC_DATE_FORMAT}" =~ (%m|%b|%s|%B) ]]; then
+    sys_error 'Option -w - can not found months definition'
+    sys_tip "${TIP_OPTION_w}"
+  fi
+
+  # Validation of custom months format
+
+  if [[ -n ${MONTHS_CUSTOM} ]]; then
+
+    if [[ $(echo "${MONTHS_CUSTOM}" | grep -o "," | wc -l) != 11 ]]; then
+      sys_error 'Option -M - count of custom months must be 12 over ","'
+      sys_tip "${TIP_OPTION_M}"
+    fi
+
+  fi
+
+  # Abort program, if critical errors was
+
+  sys_is_abort
+
 }
 
 # MAIN-PROGRAM FUNCTIONS
+
+function fx_set_custom_months() {
+  
+  # This option says which months format is used in date source
+
+  if [[ -z "${MONTHS_CUSTOM}" ]]; then
+
+    if   [[ "${SRC_DATE_FORMAT}" =~ "%m" ]]; then
+      MONTHS_CUSTOM="01,02,03,04,05,06,07,08,09,10,11,12"
+    elif [[ "${SRC_DATE_FORMAT}" =~ "%b" ]]; then
+      MONTHS_CUSTOM="Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec"
+    elif [[ "${SRC_DATE_FORMAT}" =~ "%s" ]]; then
+      MONTHS_CUSTOM="01,02,03,04,05,06,07,08,09,10,11,12"
+    elif [[ "${SRC_DATE_FORMAT}" =~ "%B" ]]; then
+      MONTHS_CUSTOM="January,Febrary,Marth,April,May,June,Jule,August,September,
+                                                      October,November,December"
+    fi
+    readonly MONTHS_CUSTOM
+
+  fi
+
+}
 
 function fx_find_files() {
 
@@ -321,7 +351,6 @@ function fx_find_files() {
         res_find \
         res_test \
         err_code
-
 
   # Prepare dates for find command
   
@@ -364,6 +393,10 @@ function fx_find_files() {
     echo "${res_find}"
   fi
 
+  # Check if it necessary to abort execute
+
+  sys_is_abort
+
 }
 
 function fx_get_data() { 
@@ -376,9 +409,6 @@ function fx_get_data() {
         awk_format \
         awk_start \
         awk_end \
-        func_begin \
-        func_main \
-        func_compare
 
     awk_cmd() {
       awk \
@@ -442,33 +472,17 @@ function fx_get_data() {
 
 function main() {
 
-  local files_list \
-        records \
-        time_0 \
-        time_1 \
-        time_2 \
-        time_3 \
-        time_res
+  local files_list
 
-  # Define necessary options, vars and constants
+  init_program_vars
+  init_help_vars
 
-  fx_define_vars
   fx_getopts "$@"
   fx_check_required_options
-  fx_define_const
-  sys_is_abort
+  fx_data_validation
 
-  fx_check_dates_format
-  sys_is_abort
-
-  # Get list of files in dates range
-
+  fx_set_custom_months
   files_list="$("fx_find_files")"
-  readonly files_list
-  sys_is_abort
-
-  # Filter records in files with dates range
-
   fx_get_data "${files_list}"
 
 }
