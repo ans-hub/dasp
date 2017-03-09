@@ -21,14 +21,13 @@ function init_program_vars() {
 
   DATE_START=''
   DATE_END=''
-  DATE_OFFSET=0
+  DATE_OFFSET=''
 
   SRC_DATE_FORMAT=''
   SRC_DATE_FIELD=''
   SRC_DATA_FNAME=''
   SRC_DATA_PATH=''
   SRC_DATA_SEPAR=''
-  SRC_BY_MTIME='false'
   
   MONTHS_CUSTOM=''
 
@@ -48,15 +47,14 @@ function init_help_vars() {
   TIP_OPTION_d="-d | data source: fields separators"
   TIP_OPTION_k="-k | data source: field(s), contains date/time"
   TIP_OPTION_w="-w | data source: date format, recognized by \$date (without first +)"
-  TIP_OPTION_o="-o | data source: days offset (+/-) range while search files (optional)"
+  TIP_OPTION_o="-o | data source: search in files by mtime +- days count offset (optional)"
   TIP_OPTION_M="-M | data source: user defined 12 months, separated by commas (optional)"
-  TIP_OPTION_r="-r | data source: only in date range by mtime (optional)"
   TIP_OPTION_t="-t | other: use temp file for awk instead of memory (optional)"
   TIP_OPTION_b="-b | other: show debug info (optional)"
   TIP_OPTION_h="-h | other: show help info (optional)"
   TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
   
-  TIP_ver="1.05"
+  TIP_ver="1.06"
   TIP_copyright="Ans Novoselov @ 2017"
   TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
 
@@ -76,7 +74,6 @@ function sys_usage() {
     ${TIP_OPTION_w}
     ${TIP_OPTION_o}
     ${TIP_OPTION_M}
-    ${TIP_OPTION_r}
     ${TIP_OPTION_t}
     ${TIP_OPTION_b}
     
@@ -191,10 +188,6 @@ function fx_getopts() {
       o) DATE_OFFSET="${OPTARG}"
          readonly DATE_OFFSET
          ;;
-      r) SRC_BY_MTIME='true'
-         readonly SRC_BY_MTIME
-         ;;
-
       h) sys_usage ;;
       ?) sys_error ;;
 
@@ -271,7 +264,7 @@ function fx_data_validation() {
 
   # Validation of date offset
 
-  if [[ "${DATE_OFFSET}" != 0 && ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
+  if [[ -n "${DATE_OFFSET}" && ! "${DATE_OFFSET}" =~ ^[-+]?[0-9]+$ ]]; then
     sys_error 'Option -o - isn`t digit'
     sys_tip "${TIP_OPTION_o}"
   fi
@@ -352,15 +345,13 @@ function fx_find_files() {
         res_test \
         err_code
 
-  # Prepare dates for find command
-  
-  find_start="$(date -d "$(date -d "${DATE_START}" +%F) -${DATE_OFFSET}days" +%Y-%m-%d)"
-  find_end="$(date -d "$(date -d "${DATE_END}" +%F) +${DATE_OFFSET}days" +%Y-%m-%d)"
-
   # Find files between two dates or all in dir, and sort results by mtime
 
-  if [[ "${SRC_BY_MTIME}" == 'true' ]]; then
-
+  if [[ -n "${DATE_OFFSET}" ]]; then
+  
+    find_start="$(date -d "$(date -d "${DATE_START}" +%F) -${DATE_OFFSET}days" +%Y-%m-%d)"
+    find_end="$(date -d "$(date -d "${DATE_END}" +%F) +${DATE_OFFSET}days" +%Y-%m-%d)"
+    
     res_find="$(find ${SRC_DATA_PATH} \
       -type f \
       -name "${SRC_DATA_FNAME}" \

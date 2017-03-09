@@ -1,0 +1,3 @@
+# 17-03-08 at 15:47  -  Developer ver of dasp (awk inside)
+# 17-03-10 at 02:05  -  Will remove unnecessary option r, and do with offset
+# 17-03-10 at 02:15  -  Add -b option to test files

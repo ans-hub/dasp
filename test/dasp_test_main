@@ -33,7 +33,6 @@ items=$(../dasp -s mock_perfomance_some/ \
               -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
               -o 1 \
-              -r \
               -t mock_temp_output/test_output \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
 
@@ -67,7 +66,6 @@ items=$(../dasp -s mock_perfomance_some/ \
               -w "[%Y-%b-%d:%H:%M:%S" \
               -k 3 \
               -o 1 \
-              -r \
               "2016-12-31 23:58:00" "2017-01-01 00:05:00" | wc -l)
 
 sys_message "${assume}" "${items}"
@@ -84,7 +82,6 @@ items=$(../dasp -s mock_regular_date/ \
               -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
               -o 1 \
-              -r \
               -t mock_temp_output/test_output \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
 
@@ -101,7 +98,6 @@ items=$(../dasp -s mock_regular_date/ \
               -w "%H:%M:%S at %Y-%m-%d" \
               -k 2 \
               -o 1 \
-              -r \
               "2008-02-02 11:00:01" "2008-02-27 14:06:11" | wc -l)
 
 sys_message "${assume}" "${items}"
@@ -118,7 +114,6 @@ items=$(../dasp -s mock_custom_months/ \
               -k 2 \
               -M "leden,únor,březen,duben,květen,červen,červenec,srpen,září,říjen,listopad,prosinec" \
               -o 1 \
-              -r \
               "2008-02-02 11:00:01" "2008-02-02 14:06:11" | wc -l)
 
 sys_message "${assume}" "${items}"
@@ -134,7 +129,6 @@ items=$(../dasp -s mock_without_century/ \
             -w "%H:%M:%S %y-%b-%d" \
             -k "2&3" \
             -o 1 \
-            -r \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
 
@@ -150,7 +144,7 @@ items=$(../dasp -s mock_without_seconds/ \
             -d " " \
             -w "%H:%M %y-%b-%d" \
             -k "2&3" \
-            -r \
+            -o 0 \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
 
@@ -167,7 +161,6 @@ items=$(../dasp -s mock_without_years/ \
             -w "%b-%d:%H:%M:%S" \
             -k "2" \
             -o 1 \
-            -r \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
 
@@ -184,7 +177,6 @@ items=$(../dasp -s mock_timestamp_date/ \
             -w "%s" \
             -k "2" \
             -o 1 \
-            -r \
             -t mock_temp_output/test_output \
             "2008-02-02 11:00:01" "2008-02-02 12:06:11" | wc -l)
 
@@ -200,7 +192,7 @@ items=$(../dasp -s mock_json/ \
             -d "\"" \
             -w "d %Y-%b-%d, t %H:%M:%S" \
             -k "16" \
-            -r \
+            -o 0 \
             "2013-12-31 02:00:00" "2014-01-02 10:00:30" | wc -l)
 
 sys_message "${assume}" "${items}"
