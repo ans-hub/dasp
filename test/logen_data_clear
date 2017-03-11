@@ -1,12 +1,12 @@
 #!/bin/bash
 # 
-# LoGen scenario for DaSp LoGen - perfom clear test dir from fake
-# and its folders for DaSp qa testing
+# LoGen scenario for DaSp LoGen - perfom clear test dir from mock
+# data and its folders for DaSp qa testing
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
 
-echo -e "\nRmdirs with testing data"
+echo -e "\nRmdirs with mock data"
 
 rm -r mock_perfomance_some \
       mock_perfomance_once \
@@ -17,4 +17,5 @@ rm -r mock_perfomance_some \
       mock_without_century \
       mock_without_seconds \
       mock_json \
+      mock_days_zeros \
       mock_temp_output

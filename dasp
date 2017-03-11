@@ -45,7 +45,7 @@ function init_help_vars() {
   TIP_OPTION_s="-s | data source: directory contains data source"
   TIP_OPTION_f="-f | data source: filenames pattern"
   TIP_OPTION_d="-d | data source: fields separators"
-  TIP_OPTION_k="-k | data source: field(s), contains date/time"
+  TIP_OPTION_k="-k | data source: field(s), contains date/time, separated by & chars"
   TIP_OPTION_w="-w | data source: date format, recognized by \$date (without first +)"
   TIP_OPTION_o="-o | data source: search in files by mtime +- days count offset (optional)"
   TIP_OPTION_M="-M | data source: user defined 12 months, separated by commas (optional)"
@@ -54,7 +54,7 @@ function init_help_vars() {
   TIP_OPTION_h="-h | other: show help info (optional)"
   TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
   
-  TIP_ver="1.07"
+  TIP_ver="1.08"
   TIP_copyright="Ans Novoselov @ 2017"
   TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
 
@@ -416,9 +416,19 @@ function fx_get_data() {
   # Prepare dates for awk command 
 
   files_list="$1"
+  
+  # Lead months format to single %02d format
+
   awk_format="$(echo "${SRC_DATE_FORMAT}" | sed "s/%b/%m/" | sed "s/%B/%m/")"
+
+  # Form start and end dates for awk comparing 
+
   awk_start="$(date -d "${DATE_START}" "+${awk_format}")"
   awk_end="$(date -d "${DATE_END}" "+${awk_format}")"
+
+  # Replace already unnecessary %- to % for split fx in awk
+  
+  awk_format="$(echo "${awk_format}" | sed "s/%-/%/")"
 
   # Iterate throught files_list 
 

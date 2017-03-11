@@ -1,5 +1,7 @@
 # Awk library for dasp script - performs get data for date range
 #
+# v1.01
+#
 # Input command:
 #
 # awk \
@@ -115,8 +117,11 @@ BEGIN {
     print "debug: awk_compare is " currDateStr " " DATE_START " " DATE_END > "/dev/stderr";
     DEBUG = "false";
   }
+
+  range_a = DATE_START - currDateStr;
+  range_b = DATE_END - currDateStr;
   
-  if (currDateStr >= DATE_START && currDateStr <= DATE_END){
+  if (range_a <= 0 && range_b >= 0){
       print $0;
   }            
 }
