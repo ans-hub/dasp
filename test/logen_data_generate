@@ -5,7 +5,6 @@
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
-
 echo -e "\nGenerating mock data for dasp testing make long time"
 echo -e "\nMkdirs for mock data"
 

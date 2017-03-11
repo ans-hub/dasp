@@ -46,8 +46,8 @@ function init_help_vars() {
   TIP_OPTION_date="-\$1 & \$2 sets in any format recognized by \$(date) command"
   
   TIP_ver="1.31"
-  TIP_copyright="Ans Novoselov @ 2017"
-  TIP_contact="http://ans.sh or ans.novoselov@gmail.com"
+  TIP_copyright="Copyright (c) 2017 Anton Novoselov"
+  TIP_contact="http://ans.sh"
 
 }
 
@@ -64,14 +64,14 @@ function sys_usage() {
     ${TIP_OPTION_o}
     ${TIP_OPTION_j}
     ${TIP_OPTION_b}
-    ${TIP_OPTION_e}
     ${TIP_OPTION_h}
   
   Positional parametrs:
     ${TIP_OPTION_date}
 
-  Version:   ${TIP_ver}
-  Contact:   ${TIP_contact}"\
+  Version:  ${TIP_ver}
+  Contact:  ${TIP_contact}
+  ${TIP_copyright}"\
   | sed 's/^\s\s//' 1>&2
   
   exit 1
@@ -83,8 +83,9 @@ function sys_description() {
 
   For usage call: logen -h
 
-  Version:   ${TIP_ver}
-  Contact:   ${TIP_contact}"\
+  Version:  ${TIP_ver}
+  Contact:  ${TIP_contact}
+  ${TIP_copyright}"\
   | sed 's/^\s\s//' 1>&2
 
   exit 1

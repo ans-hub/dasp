@@ -4,7 +4,6 @@
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
-
 function init_globals() {
   DEBUG=''
 }
