@@ -1,13 +1,13 @@
 #!/bin/bash
 # 
-# LoGen scenario for DaSp LoGen - perfom generating fake logs
+# LoGen scenario for DaSp LoGen - perfom generating mock data
 # for DaSp qa testing
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
 
-echo -e "\nGenerating fake logs for dasp testing make long time"
-echo -e "\nMkdirs for testing data"
+echo -e "\nGenerating mock data for dasp testing make long time"
+echo -e "\nMkdirs for mock data"
 
 mkdir mock_perfomance_some \
       mock_perfomance_once \
@@ -18,6 +18,7 @@ mkdir mock_perfomance_some \
       mock_without_century \
       mock_without_seconds \
       mock_json \
+      mock_days_zeros \
       mock_temp_output
 
 echo -e "\nForm perfomance data - some files"
@@ -99,5 +100,14 @@ echo -e "\nForm data in json format"
         -s 32192 \
         -g "7,5,\054,4" \
         -j \
+        -b \
+        "2013-12-30 02:00:00" "2014-01-12 10:00:30"
+
+echo -e "\nForm data: without years and days without leading zero"
+
+./logen -o "mock_days_zeros/data" \
+        -d "%b %-d %H:%M:%S" \
+        -s 32192 \
+        -g "7,5,\040,1" \
         -b \
         "2013-12-30 02:00:00" "2014-01-12 10:00:30"

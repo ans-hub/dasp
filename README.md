@@ -1,6 +1,6 @@
 # Dasp (Data Spider)
 
-This bash script is provides get data for any period from different text sources separated into fields, one or more of which contains date/time. Such as Apache server logs, nginx logs, /etc/syslogs and others.
+This bash script is provides get data for any period from different text sources separated into fields, one or more of which contains date/time. Such as Apache server logs, /etc/syslogs, json data source and others. Script my work with gz, may compare dates without leading zeros, with custom months, without years, separated in similar fields, etc.
 
 ## Usage
 
@@ -17,6 +17,10 @@ $ sudo ln -s dasp
 ~~~~
 *Note: in next steps all code writed without "./", as if you have performed command above.*
 
+### Read built-in help for command usage:
+~~~~
+$ dasp -h
+~~~~
 ### Build options for script and test it in shell:
 ~~~~
 $ dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tmp/.dasp~ "yestarday" "now"
@@ -31,31 +35,44 @@ apache_access "yesterday"
 apache_access "yesterday 14:00:05" "today 12:00"
 apache_access "2008" "2010" 1> ~/.apache_2008_2010
 ~~~~
-## Most common aliases
+### Another way to use dasp is create wrapper script
+In this case usage of dasp is more pretty:
+~~~~
+./wrapper "2 days ago" "yesterday" own_filter_1 own_filter_2
+~~~~
+For example, [https://github.io/ans-hub/osvalt](https://github.io/ans-hub/osvalt) - old-school viewer: apache log tool (wrapper to the dasp)
+
+## Most common data source
 
 Apache logs
 ~~~~
-dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tmp/.dasp~
-~~~~
-Nginx logs
-~~~~
-dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tmp/.dasp~
+dasp -s logs/ -f "*access*" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1
 ~~~~
 Syslogs
 ~~~~
-dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tmp/.dasp~
+dasp -s /var/log/ -f "syslog.*" -d " " -w "%b %-d %H:%M:%S" -k "1&2&3"
 ~~~~
 Php logs
 ~~~~
-dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tmp/.dasp~
+dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1
 ~~~~
 Your own data sources:
 ~~~~
 dasp -h
 ~~~~
 
-## Known issues
+## More data source examples:
 
-#### Script is getting date/time only from timestamp of file.
+Examples with different mock data source you may find in test case script "dasp_test_main"
 
-In this way to search over files, that where archived early, you may set option -o at 10000. This perform script to search all files in dir
+## Recemmendations:
+
+Use -t option to improve perfomance
+
+## Known issues:
+
+Getting logs without years in log line (such as syslog) is realised, but there is no way in this version to compare logs for different years period. This is feature will have realised in future version.
+
+Current version not work with milliseconds.
+
+Current version not working with time zones

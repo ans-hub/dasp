@@ -232,6 +232,23 @@ function main() {
               "2013-12-31 02:00:00" "2014-01-02 10:00:30" | wc -l)
 
   sys_message "${assume}" "${items}"
+
+  # Testing case 12
+
+  echo "Testing case 12"
+
+  assume=8
+  items=$(../dasp -s mock_days_zeros/ \
+              -f "data*" \
+              -d " " \
+              -w "%b %-d %H:%M:%S" \
+              -k "1&2&3" \
+              -o 0 \
+              ${DEBUG} \
+              "2014-01-01 12:00:00" "2014-01-04 10:00:30" | wc -l)
+
+  sys_message "${assume}" "${items}"
+
 }
 
 main "$@"
