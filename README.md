@@ -18,7 +18,7 @@ $ chmod +x dasp
 
 ### Make symbolic link to script
 ~~~~ 
-$ sudo ln -s dasp 
+$ sudo ln -s ~/folder_with_dasp_app/dasp /usr/local/bin/dasp
 ~~~~
 *Note: in next steps all code writed without "./", as if you have performed command above.*
 
@@ -34,7 +34,7 @@ $ dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tm
 ~~~~
 $ alias apache_access="dasp -s logs/ -f "*access*log" -d " " -w "[%Y-%b-%d:%H:%M:%S" -k 4 -o 1 -t /tmp/.dasp~"
 ~~~~
-### Subsequent usage:
+### Usage examples:
 ~~~~
 $ apache_access "yesterday"
 $ apache_access "yesterday 14:00:05" "today 12:00"
