@@ -1,6 +1,7 @@
 #!/bin/bash
 # 
-# DaSp test scenario for perfomance testing of dasp script
+# DaSp test scenario for perfomance testing of dasp_dev script
+# Version: 1.02
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
@@ -33,7 +34,7 @@ function main() {
 
   echo -e "\nParam: with tmp file, from some files"
   echo "Items total:" 
-  time ../dasp -s mock_perfomance_some/ \
+  time ../dev/dasp_dev -s mock_perfomance_some/ \
               -f "data*" \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
@@ -46,7 +47,7 @@ function main() {
 
   echo -e "\nParam: with tmp file, from one file"
   echo "Items total:"
-  time ../dasp -s mock_perfomance_once/ \
+  time ../dev/dasp_dev -s mock_perfomance_once/ \
               -f "data*" \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
@@ -59,7 +60,7 @@ function main() {
 
   echo -e "\nParam: without tmp file, from some files"
   echo "Items total:"
-  time ../dasp -s mock_perfomance_some/ \
+  time ../dev/dasp_dev -s mock_perfomance_some/ \
               -f "data*" \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \
@@ -71,7 +72,7 @@ function main() {
 
   echo -e "\nParam: without tmp file, from one file"
   echo "Items total:"
-  time ../dasp -s mock_perfomance_once/ \
+  time ../dev/dasp_dev -s mock_perfomance_once/ \
               -f "data*" \
               -d " " \
               -w "[%Y-%b-%d:%H:%M:%S" \

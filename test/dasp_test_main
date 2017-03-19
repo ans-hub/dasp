@@ -1,6 +1,7 @@
 #!/bin/bash
 # 
-# DaSp test scenario for automated testing dasp script
+# DaSp test scenario for automated testing dasp_dev script
+# Version: 1.02
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 
@@ -51,7 +52,7 @@ function main() {
   echo "Testing case 1"
 
   assume=106
-  items=$(../dasp -s mock_perfomance_some/ \
+  items=$(../dev/dasp_dev -s mock_perfomance_some/ \
                 -f "data*" \
                 -d " " \
                 -w "[%Y-%b-%d:%H:%M:%S" \
@@ -69,7 +70,7 @@ function main() {
   echo "Testing case 2"
 
   assume=106
-  items=$(../dasp -s mock_perfomance_some/ \
+  items=$(../dev/dasp_dev -s mock_perfomance_some/ \
                 -f "data*" \
                 -d " " \
                 -w "[%Y-%b-%d:%H:%M:%S" \
@@ -86,7 +87,7 @@ function main() {
   echo "Testing case 3"
 
   assume=106
-  items=$(../dasp -s mock_perfomance_some/ \
+  items=$(../dev/dasp_dev -s mock_perfomance_some/ \
                 -f "data*" \
                 -d " " \
                 -w "[%Y-%b-%d:%H:%M:%S" \
@@ -103,7 +104,7 @@ function main() {
   echo "Testing case 4"
 
   assume=10965
-  items=$(../dasp -s mock_regular_date/ \
+  items=$(../dev/dasp_dev -s mock_regular_date/ \
                 -f "data*" \
                 -d ";" \
                 -w "%H:%M:%S at %Y-%m-%d" \
@@ -120,7 +121,7 @@ function main() {
   echo "Testing case 5"
 
   assume=10965
-  items=$(../dasp -s mock_regular_date/ \
+  items=$(../dev/dasp_dev -s mock_regular_date/ \
                 -f "data*" \
                 -d ";" \
                 -w "%H:%M:%S at %Y-%m-%d" \
@@ -136,7 +137,7 @@ function main() {
   echo "Testing case 6"
 
   assume=56
-  items=$(../dasp -s mock_custom_months/ \
+  items=$(../dev/dasp_dev -s mock_custom_months/ \
                 -f "data*" \
                 -d " " \
                 -w "%Y:%B:%d:%H:%M:%S" \
@@ -153,7 +154,7 @@ function main() {
   echo "Testing case 7"
 
   assume=20
-  items=$(../dasp -s mock_without_century/ \
+  items=$(../dev/dasp_dev -s mock_without_century/ \
               -f "data*" \
               -d " " \
               -w "%H:%M:%S %y-%b-%d" \
@@ -170,7 +171,7 @@ function main() {
   echo "Testing case 8"
 
   assume=21
-  items=$(../dasp -s mock_without_seconds/ \
+  items=$(../dev/dasp_dev -s mock_without_seconds/ \
               -f "data*" \
               -d " " \
               -w "%H:%M %y-%b-%d" \
@@ -187,7 +188,7 @@ function main() {
   echo "Testing case 9"
 
   assume=20
-  items=$(../dasp -s mock_without_years/ \
+  items=$(../dev/dasp_dev -s mock_without_years/ \
               -f "data*" \
               -d " " \
               -w "%b-%d:%H:%M:%S" \
@@ -204,7 +205,7 @@ function main() {
   echo "Testing case 10"
 
   assume=20
-  items=$(../dasp -s mock_timestamp_date/ \
+  items=$(../dev/dasp_dev -s mock_timestamp_date/ \
               -f "data*" \
               -d ";" \
               -w "%s" \
@@ -221,7 +222,7 @@ function main() {
   echo "Testing case 11"
 
   assume=6
-  items=$(../dasp -s mock_json/ \
+  items=$(../dev/dasp_dev -s mock_json/ \
               -f "data*" \
               -d "\"" \
               -w "d %Y-%b-%d, t %H:%M:%S" \
@@ -237,7 +238,7 @@ function main() {
   echo "Testing case 12"
 
   assume=8
-  items=$(../dasp -s mock_days_zeros/ \
+  items=$(../dev/dasp_dev -s mock_days_zeros/ \
               -f "data*" \
               -d " " \
               -w "%b %-d %H:%M:%S" \

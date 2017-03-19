@@ -1,6 +1,6 @@
 # Dasp (Data Spider)
 
-This bash script is provides get data for any period from different text sources separated into fields, one or more of which contains date/time. Such as Apache server logs, /etc/syslogs, json data source and others. Script my work with gz, may compare dates without leading zeros, with custom months, without years, separated in similar fields, etc.
+This bash script is provides get data for any period from different text sources separated into fields, one or more of which contains date/time. Such as Apache server logs, /etc/syslogs, json data source and others. Script may work with gz, may compare dates without leading zeros, with custom months, without years, separated in similar fields, etc.
 
 ## Usage
 
@@ -72,8 +72,8 @@ Use -t option to improve perfomance
 
 ## Known issues:
 
-Getting logs without years in log line (such as syslog) is realised, but there is no way in this version to compare logs for different years period. This is feature will have realised in future version.
+Getting logs without years in log line (such as syslog) is realised, but there is no way in this version to compare logs for different years period. This feature will have been realised in future version.
 
-Current version not work with milliseconds.
+Current version not work with logs that contains milliseconds.
 
 Current version not working with time zones

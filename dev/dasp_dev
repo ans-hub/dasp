@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# Dasp (Data spider) - is performing getting data for defined
-# period from any data source
+# Dasp_dev (Data spider developer ver) - is performing getting
+# data for defined period from any data source
 #
 # Style guide: https://google.github.io/styleguide/shell.xml
 #
@@ -392,77 +392,6 @@ function fx_find_files() {
 
 }
 
-function fx_awk_code() {
-  
-  # For debug reason please see dev version of this lib
-
-  echo 'BEGIN {
-    split(DATE_FIELD, arrDf, "&");
-    split (MONTHS_CUSTOM, a, ",");
-    for (i=1; i<=12; i++) {
-      months[a[i]] = sprintf("%02d", i);
-    }
-    split(DATE_FORMAT, arr, "[^\045\060-\071\101-\132\141-\172\200-\377]");
-    for (key in arr) {
-        if (arr[key] != "") { 
-          if (arr[key] == "%Y" || arr[key] == "%y"){ arr[key] = "%Y" }
-          if (arr[key] == "%b" || arr[key] == "%B" || arr[key] == "%m") { arr[key] = "%m" }
-          dateFmt[arr[key]] = key ;
-        }
-    }
-    split(DATE_START, arrSt, "[^\060-\071\101-\132\141-\172\200-\377]");
-    split(DATE_END, arrEn, "[^\060-\071\101-\132\141-\172\200-\377]");
-    DATE_START = arrSt [dateFmt["%Y"]] \
-                arrSt [dateFmt["%m"]] \
-                arrSt [dateFmt["%d"]] \
-                arrSt [dateFmt["%H"]] \
-                arrSt [dateFmt["%M"]] \
-                arrSt [dateFmt["%S"]] \
-                arrSt [dateFmt["%s"]];
-    DATE_END =   arrEn [dateFmt["%Y"]] \
-                arrEn [dateFmt["%m"]] \
-                arrEn [dateFmt["%d"]] \
-                arrEn [dateFmt["%H"]] \
-                arrEn [dateFmt["%M"]] \
-                arrEn [dateFmt["%S"]] \
-                arrEn [dateFmt["%s"]];
-  }
-  {
-    i=0;
-    for (key in arrDf) {
-      if (i!=0) {
-        currDate = currDate FS $arrDf[key];
-      } else {
-        currDate = $arrDf[key]
-      }
-      i++;
-    }
-
-    if (DEBUG == "true"){
-      print "debug: awk_output is " currDate> "/dev/stderr";
-    }
-    split(currDate, arrC, "[^\060-\071\101-\132\141-\172\200-\377]");
-    currDateStr = arrC [dateFmt["%Y"]] \
-                  months[arrC [dateFmt["%m"]]] \
-                  arrC [dateFmt["%d"]] \
-                  arrC [dateFmt["%H"]] \
-                  arrC [dateFmt["%M"]] \
-                  arrC [dateFmt["%S"]] \
-                  arrC [dateFmt["%s"]];
-  }
-  {
-    if (DEBUG == "true"){
-      print "debug: awk_compare is " currDateStr " " DATE_START " " DATE_END > "/dev/stderr";
-      DEBUG = "false";
-    }
-    range_a = DATE_START - currDateStr;
-    range_b = DATE_END - currDateStr;
-    if (range_a <= 0 && range_b >= 0){
-        print $0;
-    }            
-  }';
-}
-
 function fx_get_data() { 
 
   local i \
@@ -483,7 +412,7 @@ function fx_get_data() {
       -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
       -v DEBUG="${DEBUG}" \
       -F "${SRC_DATA_SEPAR}" \
-      "$("fx_awk_code")" 
+      -f "$(sys_workdir)/dasp_dev.awk"
     }
 
   # Prepare dates for awk command 

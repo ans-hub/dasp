@@ -1,20 +1,6 @@
-# Awk library for dasp script - performs get data for date range
+# Awk library for dasp_dev script - performs get data for date range
 #
 # v1.01
-#
-# Input command:
-#
-# awk \
-#   -v DATE_START="${awk_start}" \
-#   -v DATE_END="${awk_end}" \
-#   -v DATE_FORMAT="${SRC_DATE_FORMAT}" \
-#   -v DATE_FIELD="${SRC_DATE_FIELD}" \
-#   -v MONTHS_CUSTOM="${MONTHS_CUSTOM}" \
-#   -v DEBUG="${DEBUG}" \
-#   -F "${SRC_DATA_SEPAR}" \
-#   -f "$(sys_workdir)/dasp.awk"
-#
-#__________________________________________________________________________
 
 # PREPARING OPERATIONS AT STARTS
 
