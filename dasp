@@ -22,6 +22,7 @@ function init_program_vars() {
   DATE_START=''
   DATE_END=''
   DATE_OFFSET=''
+  DATE_FILE_USE=''
 
   SRC_DATE_FORMAT=''
   SRC_DATE_FIELD=''
@@ -49,12 +50,13 @@ function init_help_vars() {
   TIP_OPTION_w="-w | data source: date format, recognized by \$date (without first +)"
   TIP_OPTION_o="-o | data source: search in files by mtime +- days count offset (optional)"
   TIP_OPTION_M="-M | data source: user defined 12 months, separated by commas (optional)"
+  TIP_OPTION_n="-n | dates: take mtime from file and use as date_start (optional)"
   TIP_OPTION_t="-t | other: use temp file for awk instead of memory (optional)"
   TIP_OPTION_b="-b | other: show debug info (optional)"
   TIP_OPTION_h="-h | other: show help info (optional)"
   TIP_OPTION_date="-\$1 & \$2 set in any format recognized by \$(date) command"
   
-  TIP_ver="1.09"
+  TIP_ver="1.10"
   TIP_copyright="Copyright (c) 2017 Anton Novoselov"
   TIP_contact="http://ans.sh"
 
@@ -74,6 +76,7 @@ function sys_usage() {
     ${TIP_OPTION_w}
     ${TIP_OPTION_o}
     ${TIP_OPTION_M}
+    ${TIP_OPTION_n}
     ${TIP_OPTION_t}
     ${TIP_OPTION_b}
     
@@ -159,7 +162,7 @@ function fx_getopts() {
 
   # Get options
 
-  while getopts 'bhw:k:f:d:s:m:M:o:rt:p:' flag
+  while getopts 'bhw:k:f:d:s:m:M:n:o:rt:p:' flag
   do
     case "${flag}" in
     
@@ -186,6 +189,9 @@ function fx_getopts() {
          ;;
       M) MONTHS_CUSTOM="${OPTARG}"
          readonly MONTHS_CUSTOM
+         ;;
+      n) DATE_FILE_USE="${OPTARG}"
+         readonly DATE_FILE_USE
          ;;
       o) DATE_OFFSET="${OPTARG}"
          readonly DATE_OFFSET
@@ -224,10 +230,15 @@ function fx_check_required_options() {
   
   # Check required positional parametrs
 
-  [[ -z "${DATE_START}" ]]  && sys_error '$1 as date_start is required' \
-                            && sys_tip "${TIP_OPTION_date}"
-  [[ -z "${DATE_END}" ]]    && sys_error '$2 as date_end is required' \
-                            && sys_tip "${TIP_OPTION_date}"
+  if [[ -z "${DATE_START}" && -z "${DATE_FILE_USE}" ]]; then
+    sys_error '$1 as date_start is required'
+    sys_tip "${TIP_OPTION_date}"
+  fi
+
+  if [[ -z "${DATE_END}" && -z "${DATE_FILE_USE}" ]]; then
+    sys_error '$2 as date_end is required'
+    sys_tip "${TIP_OPTION_date}"
+  fi
   
   # Abort if critical errors are here, before next step
 
@@ -235,14 +246,14 @@ function fx_check_required_options() {
 
 }
 
-function fx_data_validation() {
+function fx_options_content_validation() {
 
   # Validation of tmp file
 
   if [[ ! -z "${TMP_FILE}" ]]; then
 
     if [[ -d "${TMP_FILE}" ]]; then
-      sys_error 'Option -t - should be not path'
+      sys_error 'Option -t - should be not a path'
       sys_tip "${TIP_OPTION_t}"
     fi
     
@@ -271,6 +282,53 @@ function fx_data_validation() {
     sys_tip "${TIP_OPTION_o}"
   fi
 
+  # Validation of months format in date format
+
+  if [[ ! "${SRC_DATE_FORMAT}" =~ (%m|%b|%s|%B) ]]; then
+    sys_error 'Option -w - can not found months definition'
+    sys_tip "${TIP_OPTION_w}"
+  fi
+
+  # Validation of custom months format
+
+  if [[ -n ${MONTHS_CUSTOM} ]]; then
+
+    if [[ $(echo "${MONTHS_CUSTOM}" | grep -o "," | wc -l) != 11 ]]; then
+      sys_error 'Option -M - count of custom months must be 12 over ","'
+      sys_tip "${TIP_OPTION_M}"
+    fi
+
+  fi
+
+  # Validation of files that setted for getting mtime
+
+  if [[ -n "${DATE_FILE_USE}" ]]; then
+    
+    if [[ -d "${DATE_FILE_USE}" ]]; then
+      sys_error 'Option -N - should be not a path'
+      sys_tip "${TIP_OPTION_N}"
+    
+    elif [[ ! -e "${DATE_FILE_USE}" ]]; then
+      sys_error 'Option -N - file is not exists'
+      sys_tip "${TIP_OPTION_N}"
+    
+    elif [[ ! -r "${DATE_FILE_USE}" ]]; then
+      sys_error 'Option -N - not enought permissions to read file'
+      sys_tip "${TIP_OPTION_N}"
+    fi
+
+    sys_debug "Use ${DATE_FILE_USE} file to read time"
+
+  fi
+
+  # Abort program, if critical errors was
+
+  sys_is_abort
+
+}
+
+function fx_dates_validation() {
+
   # Validation of date/time and format options
 
   date -d "$DATE_START" > /dev/null 2>&1
@@ -291,31 +349,28 @@ function fx_data_validation() {
     sys_tip "${TIP_OPTION_w}"
   fi
 
-  # Validation of months format in date format
-
-  if [[ ! "${SRC_DATE_FORMAT}" =~ (%m|%b|%s|%B) ]]; then
-    sys_error 'Option -w - can not found months definition'
-    sys_tip "${TIP_OPTION_w}"
-  fi
-
-  # Validation of custom months format
-
-  if [[ -n ${MONTHS_CUSTOM} ]]; then
-
-    if [[ $(echo "${MONTHS_CUSTOM}" | grep -o "," | wc -l) != 11 ]]; then
-      sys_error 'Option -M - count of custom months must be 12 over ","'
-      sys_tip "${TIP_OPTION_M}"
-    fi
-
-  fi
-
   # Abort program, if critical errors was
 
   sys_is_abort
 
+  sys_debug "Date start: $(date -d "${DATE_START}" "+%Y-%m-%d %H:%M:%S")"
+  sys_debug "Date end: $(date -d "${DATE_END}" "+%Y-%m-%d %H:%M:%S")"
+
 }
 
 # MAIN-PROGRAM FUNCTIONS
+
+function fx_re_set_dates() {
+
+  local stat;
+  
+  if [[ -n "${DATE_FILE_USE}" ]]; then
+    stat="$(stat -c %Y ${DATE_FILE_USE})"
+    DATE_START="$(date -d "@${stat}" "+%Y-%m-%d %H:%M:%S")"
+    DATE_END="now"
+  fi
+
+}
 
 function fx_set_custom_months() {
   
@@ -553,7 +608,12 @@ function main() {
 
   fx_getopts "$@"
   fx_check_required_options
-  fx_data_validation
+  
+  fx_options_content_validation
+  if [[ -n "${DATE_FILE_USE}" ]]; then
+    fx_re_set_dates
+  fi
+  fx_dates_validation
 
   fx_set_custom_months
   files_list="$("fx_find_files")"
